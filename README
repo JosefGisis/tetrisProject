@@ -1,0 +1,124 @@
+# tetrisProject
+This is the code for my first official Python project. It is a bare-bones tetris style game.
+I think I am going to name it "Yossi's completely original, totally awesome block game, trademark."
+
+Here are the requirements for this game:
+
+Start_screen:
+1.	Game title
+2.	Development information
+3.	Press button to start game
+4. Version information
+
+Main_menu(optional):
+1.	Start game
+2.	Options
+3.	Help
+4.	Credit and development information
+5.	Starting difficulty level
+6.	Exit
+
+Play_surface_setup:
+1.	Play surface grid 10 squares wide by 20 squares tall (each grid will probably be 30 pixels square)
+2.	Scoreboard with enough space to keep score, high score, level, and lines erased
+3.	Opt: board for username and time
+4.	Surface to display next tetromino
+
+Game_loop:
+1.	When the player starts a new game…
+2.	And while the player has not lost the game…
+3.	A random assortment of tetrominos are projected onto the play surface
+4.	When the user presses the right arrow key and the left arrow key, the tetromino moves to the right and left respectively
+6.	(optional) Holding down the right or left arrow keys moves the tetromino multiple squares at a time
+7.	The A key rotates the tetromino counterclockwise
+8.	The D key rotates the tetromino clockwise
+9.	Rotation has no hold-down key feature
+10. One key speeds up the descent of the tetromino
+11. The ESC key brings up the pause menu
+12. (optional) A continuous loop of music plays in the background, and music may change as the game level increases
+13. Points are accumulated and displayed on the scoreboard
+
+Mid_game_menu:
+1.	Resume option
+2.	Start new game >>> call new game module
+3.	Options
+4.	Help
+5.	Credit and development information
+6.	(optional) Mute sound (?)
+7.	Exit game
+
+Tetrominoes:
+1.	Seven distinct tetromino pieces each comprised of four segments:
+   a.	O piece
+   b.	I piece
+   c.	S piece
+   d.	Z piece
+   e.	L piece
+   f.	J piece
+   g.	T piece
+2.	Seven aforementioned pieces need to be generated randomly and displayed on the play surface
+3.	Each shape has its own color
+4.	2x3 pieces first start descending on the 4th to the 7th segment of the top row
+5.	1x4 pieces first start descending on the 4th to the 8th segment of the top row
+6.	Pieces need to move downward at a constant rate that is determined by grid size
+7.	Pieces need to be able to move left and right one grid at a time
+8.	The drop rate will accelerate as the user reaches higher levels
+9.	Each piece (other than O) needs to be able to rotate in a clockwise and/or counterclockwise direction
+10.	2x3 pieces rotation:
+a.	2x3 pieces rotate within a 3x3
+b.	On a clockwise rotation the piece moves from the top two rows to the two right columns
+c.	On another clockwise rotation, the piece takes up the bottom two rows
+d.	The piece is upside down (this does not matter with the s and z piece which look the same)
+e.	On another clockwise rotation the piece moves from the bottom two rows to the two left columns
+f.	And another clockwise rotation sets the piece into its original position at the top two rows
+g.	The same happens in reverse when the user turns the piece counterclockwise
+11.	1x4 piece rotation:
+a.	A 1x4 piece rotates in a four-by-four block (making a plus sign four squares high by four squares tall)
+b.	On a clockwise rotation, the piece goes from the second-to-top row, to the second-to-right column, to the second to bottom row, to the second-to-left column, and back to the second-to-top row.
+12.	Pieces need to have the ability to drop at a faster rate
+13.	(optional) Pieces need to have the ability to drop instantaneously
+14.	Pieces need to come to rest when they reach the bottom or hit the top of another piece, whichever comes first
+15.	When said piece comes to a stop, all four segment need to come to a rest regardless of whether they have come to rest on a segment beneath them
+16.	Pieces may still be moved and rotated briefly after they have come into contact with the bottom of the play board or the top of another piece
+17.	Pieces need to be accounted as four separate segments (the reason for this is explained in the row completion requirements segment)
+18.	(optional) t pieces need to be able to do a t spin
+19.	All pieces start above the top of the surface
+
+Ghost_piece (optional):
+1.	During the descent of each tetromino, a semitranslucent tetromino (or an outline) – identical in shape, position, and orientation – mimics the falling tetromino.
+2.	While the play surface is clear beneath the falling tetromino (that is in its current x position), the ghost piece will move along the bottom of the play surface, imitating the piece's final position (given it does not move, or rotate)
+3.	While the play surface beneath the falling tetrominoes is filled, the ghost piece glides along the tops of the fallen pieces mimicking the falling tetromino's final position
+
+Row_completion:
+1.	Row completion detection keeps track of all twenty rows to see if they have been filled
+2.	Each tetromino segment needs to be attributed to each segment of the playboard (200 segments)
+3.	When one row is filled up, all the segment are destroyed, and the above pieces drop down, and an animation is called
+4.	When four rows are filled at once, the player receives a Tetris, and a special animation is called
+5.	Row completion detection eliminates completed rows, but pieces can be suspended over a gap, if such turns out to be the case. Therefor…
+6.	It is necessary to program the tetrominoes as four cohesive but independent pieces.
+
+Next_piece:
+1.	Separate from the scoreboard a different window needs to display the next piece
+
+Score_counter:
+1.	Points should be awarded for each tetromino that reaches the bottom of the play board or the top of another tetromino (TBD)
+2.	Point should be awarded for accelerated pieces (amount to be determined)
+3.	(optional) Points should be awarded for instantaneously dropped tetrominoes (amount to be determined)
+4.	Points are awarded for erasing a row (amount to be determined)
+5.	The highest number of points are rewarded for performing a tetris
+6.	(optional) The highest number of points are rewarded for a t-spin
+7.	Score needs to be kept for the current game, or the “current score”
+8.	The score affect the rate of the game, or level
+9.	High scores need to be kept for the user
+
+Game_over :
+1.	When the top of any tetromino at its rest exceeds the maximum height of the play surface, the player loses the game
+2.	The current score is recorded and compared against the high score
+3.	When the current score beats the high score, the new high score is displayed with the current score, along with a message stating “new high score!”
+4.	When the high score is greater than the current score, the current and “high score” are both displayed
+5.	The user is asked if he would like to start a new game >>> call new game
+6.	If not, the user returns to the main menu
+
+New_Game:
+1.	The current score needs to be cleared
+2.	The current play surface needs to be cleared
