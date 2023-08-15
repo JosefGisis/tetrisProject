@@ -1,5 +1,4 @@
-"""this code is practice for tetromino objects, functions, and attributes. many details may change when
-implemented into a functional program."""
+"""this code implements matrix rotation to all tetromino pieces"""
 
 import sys, pygame, random
 
@@ -26,7 +25,8 @@ t_piece = [[0, 1, 0],
            [0, 0, 0]]
 
 o_piece = [[0, 1, 1],
-           [0, 1, 1]]
+           [0, 1, 1],
+           [0, 0, 0]]
 
 s_piece = [[0, 1, 1],
            [1, 1, 0],
@@ -53,21 +53,24 @@ class Square(pygame.sprite.Sprite):
 
 #this function generates each tetromino
 def gen_piece(color):
-    global y
-    for row in current_letter:
-        for column in row:
-            #checks to see if there is a number
-            if column >= 3:
-                #this uses the numbers in the matrix to get the location
-                x = 32 * column
+    #startx and y control where the tetrominos start
+    global starty, startx
+    current_piece.empty()
+    for row in range(len(current_letter)):
+        y = starty + (row * 32)
+        #gets the length of each list within current_letter. This iterates the squares and tests if there is a 1
+        for column in range(len(current_letter)):
+            #checks to see if a square should be placed in that grid
+            if current_letter[row][column] == 1:
+                #this uses the for loop and startx to display the piece
+                x = startx + (32 * column)
                 #initializes a new square for the tetromino
                 new_square = Square([x, y], color)
                 #adds the new square to a group object that makes up the tetrominos
                 current_piece.add(new_square)
-        y += 32
 
 def shift_right():
-    global current_piece, rightmost
+    global current_piece, rightmost, startx
     #checks if the piece has hit the bottom yet
     if moving == True:
         #checks if the tetromino has hit the right wall
@@ -77,9 +80,10 @@ def shift_right():
         if rightmost == False:
             for piece in current_piece.sprites():
                 piece.rect.centerx += 32
+            startx += 32
 
 def shift_left():
-    global current_piece, leftmost
+    global current_piece, leftmost, startx
     if moving == True:
         #checks if the tetromino has hit the left wall;
         for piece in current_piece.sprites():
@@ -88,9 +92,10 @@ def shift_left():
         if leftmost == False:
             for piece in current_piece.sprites():
                 piece.rect.centerx -= 32
+            startx -= 32
 
 def shift_down():
-    global current_piece, moving
+    global current_piece, moving, starty
     #checks if the tetromino has hit the bottom
     for piece in current_piece.sprites():
         if piece.rect.bottom >= 636:
@@ -99,7 +104,24 @@ def shift_down():
     if moving == True:
         for piece in current_piece.sprites():
             piece.rect.centery += 32
+        starty += 32
 
+def rotate_tetro():
+    global current_letter, o_piece
+    if current_letter != o_piece and moving:
+        rotated_letter = [[current_letter[j][i] for j in range(len(current_letter))] for i in range(len(current_letter[0]))]
+        # all the rows are reversed
+        for list in rotated_letter:
+            list.reverse()
+        current_letter = rotated_letter
+
+def ccw_tetro():
+    global current_letter, o_piece
+    if current_letter != o_piece and moving:
+        ccw_letter = [[current_letter[j][i] for j in range (len(current_letter[0]))] for i in range(len(current_letter))]
+        #order of rows are reversed
+        ccw_letter.reverse()
+        current_letter = ccw_letter
 
 pygame.init()
 screen = pygame.display.set_mode([318, 638])
@@ -108,12 +130,11 @@ screen.fill([255, 255, 255])
 #this sprite group holds the current tetromino
 current_piece = pygame.sprite.Group()
 #y is initialize to start off the top of the play surface
-y = -64
+starty = -64
+startx = 96
 moving = True
 leftmost = False
 rightmost = False
-
-running = True
 
 '''I should add this to a dictionary. or I can create a dictionary containing the
 shapes as keys and the colors as values'''
@@ -130,9 +151,9 @@ coral = [255, 127, 80]
 is not how tetrominos will be called, so all pieces are generated with the same color'''
 gen_piece(red)
 #pygame event to make the piece descend
-pygame.time.set_timer(25, 800)
+pygame.time.set_timer(25, 1000)
 
-
+running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -146,11 +167,12 @@ while running:
                 shift_left()
                 #when the user moves left, the tetromino is no longer rightmost
                 rightmost = False
-            #this is a temporary event for testing and will be removed later
-            elif event.key == pygame.K_UP:
-                for piece in current_piece.sprites():
-                    piece.rect.centery -= 32
-                moving = True
+            elif event.key == pygame.K_d:
+                rotate_tetro()
+                gen_piece(red)
+            elif event.key == pygame.K_a:
+                ccw_tetro()
+                gen_piece(red)
         elif event.type == 25:
             shift_down()
     '''this code below is temporary and will not be active later. this code creates
