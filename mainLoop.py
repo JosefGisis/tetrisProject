@@ -57,16 +57,13 @@ class Drawnbutton:
         screen.blit(button_text_surf, button_text_pos)
 
     def update_button(self, color):
-        global hovering
         mouse_pos = pygame.mouse.get_pos()
         if mouse_pos[0] >= self.left and mouse_pos[0] <= (self.left + self.width):
             if mouse_pos[1] >= self.top and mouse_pos [1] <= (self.top + self.height):
                 pygame.draw.rect(screen, color, [self.left, self.top, self.width, self.height], 0, 7)
-                hovering = True
-                return self.text
-        else:
-            hovering = False
-            return None
+                return True
+            else: return None
+        else: None
 
 def start_menu():
     running = True
@@ -95,40 +92,54 @@ def start_menu():
         >>> This update function will work alongside the event handler to see if the mouse
         button is being depressed. When it is depressed the button will also change the 
         game state. 
+        This is also the first method for displaying these buttons. Later updates may include
+        a loop to deal with the buttons. A loop would require tha drawnbutton class to be
+        updated as well.
+        Each button contains an initializing function, an update function, and text function.
+        Each variable and function is associated with the button's name for clarity.
         """
-
-
-        button_left = (screen.get_width() - 500) / 2
+        button_left = (screen.get_width() - 500) / 2 #gets the starting point of the button
         button_width = 500
         button_height = 75
-        button1 = Drawnbutton(screen, color_dict["darker purple"], [button_left, 315, button_width, button_height], "START")
-        selection1 = button1.update_button(color_dict["dark purple"])
-        button1.button_text(color_dict["white"], main_font)
-        button2 = Drawnbutton(screen, color_dict["darker purple"], [button_left, 415, button_width, button_height], "HELP & INFO")
-        selection2 = button2.update_button(color_dict["dark purple"])
-        button2.button_text(color_dict["white"], main_font)
-        button3 = Drawnbutton(screen, color_dict["darker purple"], [button_left, 515, button_width, button_height], "EXIT")
-        selection3 = button3.update_button(color_dict["dark purple"])
-        button3.button_text(color_dict["white"], main_font)
+        start_button = Drawnbutton(screen, color_dict["darker purple"],
+                                   [button_left, 315, button_width, button_height],"START")
+        select_start = start_button.update_button(color_dict["dark purple"])
+        start_button.button_text(color_dict["white"], main_font)
+
+        help_button = Drawnbutton(screen, color_dict["darker purple"],
+                                  [button_left, 415, button_width, button_height], "HELP & INFO")
+        select_help = help_button.update_button(color_dict["dark purple"])
+        help_button.button_text(color_dict["white"], main_font)
+
+        exit_button = Drawnbutton(screen, color_dict["darker purple"],
+                                  [button_left, 515, button_width, button_height], "EXIT")
+        select_exit = exit_button.update_button(color_dict["dark purple"])
+        exit_button.button_text(color_dict["white"], main_font)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and hovering:
-                if selection1:
+            elif event.type == pygame.MOUSEBUTTONDOWN: #checks if the mouse is being depressed
+                """checks if any of the buttons are returning a hovering states (e.g. select start)
+                which means the player is hovering over that particular button."""
+                if select_start:
                     state = "start"
                     return state
-                elif selection2:
+                elif select_help:
                     state = "help and info"
                     return state
-                elif selection3:
+                elif select_exit:
                     state = "exit"
                     return state
+                else: None
+            else: None
 
         pygame.display.flip()
 
     pygame.quit()
 
+"""This is a placeholder function"""
 def help_and_info():
     running = True
     screen.fill((0, 0, 0))
@@ -152,6 +163,7 @@ def help_and_info():
 
     pygame.quit()
 
+"""This is a placeholder function"""
 def start_game():
     screen.fill(color_dict["black"])
     running = True
@@ -174,6 +186,7 @@ def start_game():
 def pause_menu():
     pass
 
+"""This is a placeholder function"""
 def game_over():
     running = True
     while running:
