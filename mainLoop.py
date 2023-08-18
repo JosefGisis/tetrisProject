@@ -97,19 +97,6 @@ def start_menu():
         game state. 
         """
 
-        """text_list = ["START", "HELP & INFO", "EXIT"]
-        button_list = []
-        for i in range(len(text_list)):
-            new_button = Drawnbutton(screen, color_dict["darker purple"], [((screen.get_width() - 500) // 2),
-                                                                           (315 + i * 100), 500, 75], text_list[i])
-            new_button.update_button(color_dict["dark purple"])
-            new_button.button_text(color_dict["white"], main_font)
-            button_list.append(new_button)
-
-        for button in button_list:
-            print(button.text)
-
-        print(hovering)"""
 
         button_left = (screen.get_width() - 500) / 2
         button_width = 500
@@ -123,7 +110,6 @@ def start_menu():
         button3 = Drawnbutton(screen, color_dict["darker purple"], [button_left, 515, button_width, button_height], "EXIT")
         selection3 = button3.update_button(color_dict["dark purple"])
         button3.button_text(color_dict["white"], main_font)
-
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
