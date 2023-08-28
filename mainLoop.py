@@ -20,8 +20,6 @@ main_font = "ocraextended"
 copyrite_font = pygame.font.Font(None, 30)
 banner_font = pygame.font.SysFont(main_font, 80)
 score_font = pygame.font.SysFont(main_font, 35)
-resized_barney_meme = pygame.transform.scale(pygame.image.load("barney kid meme.jpg"), (300, 400))
-resized_holding_fart_meme = pygame.transform.scale(pygame.image.load("holding in fart.jpg"), (450, 600))
 bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)
 
 """
@@ -77,10 +75,10 @@ def start_menu():
         can be centered by using the height of the buttons as well.
         """
         title_surf = banner_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
-        title_pos = (((screen.get_width() - title_surf.get_width())/2), 150)
+        title_pos = (((screen_width - title_surf.get_width())/2), 150)
         screen.blit(title_surf, title_pos)
         copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis", True, color_dict["white"])
-        copyrite_pos = (((screen.get_width() - copyrite_surf.get_width())/2), 625)
+        copyrite_pos = (((screen_width - copyrite_surf.get_width())/2), 625)
         screen.blit(copyrite_surf, copyrite_pos)
         """
         >>> Below are the three buttons for the start menu
@@ -98,7 +96,7 @@ def start_menu():
         Each button contains an initializing function, an update function, and text function.
         Each variable and function is associated with the button's name for clarity.
         """
-        button_left = (screen.get_width() - 500) / 2 #gets the starting point of the button
+        button_left = (screen_width - 500) / 2 #gets the starting point of the button
         button_width = 500
         button_height = 75
         start_button = Drawnbutton(screen, color_dict["darker purple"],
@@ -145,10 +143,9 @@ def help_and_info():
     screen.fill((0, 0, 0))
     while running:
 
-        screen.blit(resized_barney_meme, [350, 100])
         title_msg = "HELP & INFO"
         title_surf = banner_font.render(title_msg, True, (255, 255, 255))
-        title_pos = (((screen.get_width() - title_surf.get_width()) / 2), 550)
+        title_pos = (((screen_width - title_surf.get_width()) // 2), ((screen_height - title_surf.get_height()) // 2))
         screen.blit(title_surf, title_pos)
 
         for event in pygame.event.get():
@@ -169,7 +166,10 @@ def start_game():
     running = True
     while running:
 
-        screen.blit(resized_holding_fart_meme, [275, 100])
+        title_msg = "GAME SCREEN"
+        title_surf = banner_font.render(title_msg, True, (255, 255, 255))
+        title_pos = (((screen_width - title_surf.get_width()) // 2), ((screen_height - title_surf.get_height()) // 2))
+        screen.blit(title_surf, title_pos)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -195,7 +195,7 @@ def game_over():
 
         title_msg = "GAME OVER"
         title_surf = banner_font.render(title_msg, True, (255, 255, 255))
-        title_pos = (((screen.get_width() - title_surf.get_width()) / 2), 325)
+        title_pos = (((screen_width - title_surf.get_width()) / 2), 325)
         screen.blit(title_surf, title_pos)
 
         for event in pygame.event.get():
