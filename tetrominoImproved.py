@@ -6,6 +6,7 @@ import sys, pygame, random
 they can be rotated. in this code, the location of the squares are designated by the numbers in the 
 matrices (numbers three to six). This method will likely need to change later to only ones and zeros, 
 and the locations will be set through a for loop'''
+
 #the i piece needs to have a grid 4x4 to allow rotation
 i_piece = [[0, 0, 0, 0],
            [1, 1, 1, 1],
