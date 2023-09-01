@@ -1,15 +1,26 @@
+"""
+This is some practice for the main game loop of my tetris projects.
+Quick note: Tetromino refers to the seven different tetris shapes, each shape is associated with a letter, tetro is
+short for tetromino, segment refers to one of the four parts of each tetromino, matrix refers to the list of lists that
+structures each tetromino shape, and surface (in regards to segments) refers to images displayed on each segment to
+enhance their appearance and give them colors.
+"""
 import sys, pygame, random
 
 """
 This is the segment class for all tetrominos. Throughout the program, segment refers to all of the four parts each     
 tetromino is made up of. The Segment class takes a location and surface argument to generate each piece.
 """
+
+
 class Segment(pygame.sprite.Sprite):
     def __init__(self, location, surface):
         pygame.sprite.Sprite.__init__(self)
         self.image = surface
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = location
+
+
 """
 Current tetro is the is the pygame group that is responsible for the current or falling tetromino (throughout the
 program, tetro is always referring to tetromino). Current_tetro is declared right before the gen_tetro function for the
@@ -18,6 +29,8 @@ function checks the current letter and creates a segment at the correct location
 and preset variable labeled startx and starty.
 """
 current_tetro = pygame.sprite.Group()
+
+
 def gen_tetro(letter, surface):
     global starty, startx
     current_tetro.empty()
@@ -27,6 +40,8 @@ def gen_tetro(letter, surface):
                 location = [(startx + (segment_size * column)), (starty + (segment_size * row))]
                 new_segment = Segment(location, surface)
                 current_tetro.add(new_segment)
+
+
 """
 Same as the previous function, next_tetro is a sprite group declared before its respective function for the sake of 
 clarity. Each tetro is generated along with the next tetro. The gen_next function assigns the shape of the tetro as well
@@ -34,6 +49,8 @@ as the color (referred to as surface). Rather than being displayed on the play s
 board meant to display the next piece. The location expression is temporary a will be corrected later.
 """
 next_tetro = pygame.sprite.Group()
+
+
 def gen_next():
     global next_letter, next_surface
     """
@@ -49,6 +66,7 @@ def gen_next():
                 new_segment = Segment(location, next_surface)
                 next_tetro.add(new_segment)
 
+
 """
 Dropped_segments and update_surface are responsible for handling each tetro and the game loop, once the tetro lands.
 Each segment is transferred to dropped_segments, the current tetro is emptied, variables startx and starty are reset,
@@ -56,6 +74,8 @@ current_letter and current_surface take their values from the next tetromino, a 
 tetromino is created.
 """
 dropped_segments = pygame.sprite.Group()
+
+
 def update_surface():
     global starty, startx, current_tetro, moving, next_letter, next_surface, current_letter, current_surface
     for segment in current_tetro.sprites():
@@ -68,12 +88,15 @@ def update_surface():
     gen_next()
     moving = True
 
+
 """
 This function moves the tetro to the right. It checks if the tetro has hit the right wall, and if it has not, the tetro
 is shifted to the right. The startx variable is also updated, so a new tetromino can be updated at the same position.
 The shift_right function also makes the leftmost condition false because the piece has been moved away from the right
 wall.
 """
+
+
 def shift_right():
     global current_tetro, rightmost, leftmost, startx
     if moving == True:
@@ -86,9 +109,12 @@ def shift_right():
             startx += segment_size
             leftmost = False
 
+
 """
 See previous doc.
 """
+
+
 def shift_left():
     global current_tetro, leftmost, rightmost, startx
     if moving == True:
@@ -101,9 +127,12 @@ def shift_left():
             startx -= segment_size
             rightmost = False
 
+
 """
 See previous doc.
 """
+
+
 def shift_down():
     global current_tetro, moving, starty
     for segment in current_tetro.sprites():
@@ -114,6 +143,7 @@ def shift_down():
             segment.rect.centery += segment_size
         starty += segment_size
 
+
 """
 This function handles the clockwise rotation of the current tetro. The function first checks to make sure the current
 tetro is not the o piece (see documentation for O constant) and that the tetro has not landed yet. The function uses
@@ -121,6 +151,8 @@ list comprehension to transpose the rows and columns and reverse the order of ea
 by ninety degrees (more information can be found by looking into matrix rotation algorithms). A new tetro is generated,
 using the updated matrix, at the same spot using the tracking variables startx and starty. 
 """
+
+
 def cw_rotation():
     global current_letter, current_surface, O
     if current_letter != O and moving:
@@ -130,10 +162,13 @@ def cw_rotation():
         current_letter = rotated_letter
         gen_tetro(current_letter, current_surface)
 
+
 """
 Same as the previous function. The rows and columns are transposed. However, unlike the previous function, the rows are
 reversed rather than the contents of each row being reversed.
 """
+
+
 def ccw_rotation():
     global current_letter, current_surface, O
     if current_letter != O and moving:
@@ -196,6 +231,7 @@ play surface size, movement size, etc. are determined by segment_size.
 segment_size = 36
 starty = (-2 * segment_size)
 startx = (3 * segment_size)
+
 """
 Moving, leftmost, rightmost check if the the tetro has hit the right or left wall or the floor. USEREVENT is a custom
 event used in a timer event later on.
@@ -208,6 +244,7 @@ USEREVENT = 24
 pygame.init()
 display_size = screen_width, screen_height = (1000, 800)
 screen = pygame.display.set_mode(display_size)
+
 """
 These are some variables to set the size of the play surface, as well determine the right and bottom boundaries of the
 play surface. The right and bottom borders help determine the right border of the display. The right margin helps 
@@ -222,10 +259,13 @@ pygame.display.set_caption("TITLE PLACEHOLDER")
 pygame.time.Clock()
 bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)
 pygame.time.set_timer(USEREVENT, 250)
+
 """
 Sets the first next tetro. This starts the cycle of current and next tetro generation.
 """
 gen_next()
+
+
 def start_game():
     global rightmost, leftmost
     running = True
