@@ -19,6 +19,7 @@ class Segment(pygame.sprite.Sprite):
         self.image = surface
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = location
+        self.rect.right, self.rect.bottom = (self.rect.left + segment_size), (self.rect.top + segment_size)
 
 
 """
@@ -86,7 +87,7 @@ def update_surface():
     gen_tetro(current_letter, current_surface)
     next_tetro.empty()
     gen_next()
-    moving = True
+    moving = 0
 
 
 """
@@ -98,16 +99,16 @@ wall.
 
 
 def shift_right():
-    global current_tetro, rightmost, leftmost, startx
-    if moving == True:
+    global startx
+    blocked = False
+    if moving < delay:
         for segment in current_tetro.sprites():
             if segment.rect.right >= play_surface_width:
-                rightmost = True
-        if rightmost == False:
+                blocked = True
+        if not blocked:
             for segment in current_tetro.sprites():
                 segment.rect.centerx += segment_size
             startx += segment_size
-            leftmost = False
 
 
 """
@@ -116,16 +117,16 @@ See previous doc.
 
 
 def shift_left():
-    global current_tetro, leftmost, rightmost, startx
-    if moving == True:
+    global startx
+    blocked = False
+    if moving < delay:
         for segment in current_tetro.sprites():
             if segment.rect.left <= 0:
-                leftmost = True
-        if leftmost == False:
+                blocked = True
+        if not blocked:
             for segment in current_tetro.sprites():
                 segment.rect.centerx -= segment_size
             startx -= segment_size
-            rightmost = False
 
 
 """
@@ -134,11 +135,13 @@ See previous doc.
 
 
 def shift_down():
-    global current_tetro, moving, starty
+    global moving, starty
+    blocked = False
     for segment in current_tetro.sprites():
         if segment.rect.bottom >= play_surface_height:
-            moving = False
-    if moving == True:
+            blocked = True
+            moving += 1
+    if not blocked:
         for segment in current_tetro.sprites():
             segment.rect.centery += segment_size
         starty += segment_size
@@ -150,17 +153,33 @@ tetro is not the o piece (see documentation for O constant) and that the tetro h
 list comprehension to transpose the rows and columns and reverse the order of each row. This rotates the letter matrix
 by ninety degrees (more information can be found by looking into matrix rotation algorithms). A new tetro is generated,
 using the updated matrix, at the same spot using the tracking variables startx and starty. 
+Then the function checks if the tetro has exceeded the boundaries of the right or left walls or the floor of the play
+surface. Then it makes correction accordingly. Currently the code is repetitive and has three loops for each side.
+Future improvements may reduce the number of loops. 
 """
 
 
 def cw_rotation():
-    global current_letter, current_surface, O
-    if current_letter != O and moving:
+    global current_letter
+    if current_letter != O and moving < delay:
         rotated_letter = [[current_letter[j][i] for j in range(len(current_letter))] for i in range(len(current_letter[0]))]
         for list in rotated_letter:
             list.reverse()
         current_letter = rotated_letter
         gen_tetro(current_letter, current_surface)
+        for segment in current_tetro:
+            if segment.rect.left < 0:
+                difference = -segment.rect.left
+                for segment in current_tetro:
+                    segment.rect.left += difference
+            elif segment.rect.left >= play_surface_width:
+                difference = (segment.rect.right - play_surface_width)
+                for segment in current_tetro:
+                    segment.rect.left -= difference
+            elif segment.rect.top >= play_surface_height:
+                difference = (segment.rect.bottom - play_surface_height)
+                for segment in current_tetro:
+                    segment.rect.left -= difference
 
 
 """
@@ -170,13 +189,25 @@ reversed rather than the contents of each row being reversed.
 
 
 def ccw_rotation():
-    global current_letter, current_surface, O
-    if current_letter != O and moving:
+    global current_letter
+    if current_letter != O and moving < delay:
         rotated_letter = [[current_letter[j][i] for j in range (len(current_letter[0]))] for i in range(len(current_letter))]
         rotated_letter.reverse()
         current_letter = rotated_letter
         gen_tetro(current_letter, current_surface)
-
+        for segment in current_tetro:
+            if segment.rect.left < 0:
+                difference = -segment.rect.left
+                for segment in current_tetro:
+                    segment.rect.left += difference
+            elif segment.rect.left >= play_surface_width:
+                difference = (segment.rect.right - play_surface_width)
+                for segment in current_tetro:
+                    segment.rect.left -= difference
+            elif segment.rect.top >= play_surface_height:
+                difference = (segment.rect.bottom - play_surface_height)
+                for segment in current_tetro:
+                    segment.rect.left -= difference
 
 """
 Most of the varables are declared in this section. Letter matrices are declared along with surfaces for the sake of
@@ -236,9 +267,7 @@ startx = (3 * segment_size)
 Moving, leftmost, rightmost check if the the tetro has hit the right or left wall or the floor. USEREVENT is a custom
 event used in a timer event later on.
 """
-moving = False
-leftmost = False
-rightmost = False
+moving = delay = 5
 USEREVENT = 24
 
 pygame.init()
@@ -274,7 +303,7 @@ def start_game():
         if moving checks to see if the tetro has landed yet. It it has not, the program checks for user input. Else the
         a new piece is generated. The else condition also checks if the user has cancelled the game.
         """
-        if moving:
+        if moving < delay:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
