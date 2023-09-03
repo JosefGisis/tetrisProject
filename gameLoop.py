@@ -267,6 +267,7 @@ startx = (3 * segment_size)
 Moving, leftmost, rightmost check if the the tetro has hit the right or left wall or the floor. USEREVENT is a custom
 event used in a timer event later on.
 """
+
 moving = delay = 5
 USEREVENT = 24
 
