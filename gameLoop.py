@@ -19,7 +19,6 @@ class Segment(pygame.sprite.Sprite):
         self.image = surface
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = location
-        self.rect.right, self.rect.bottom = (self.rect.left + segment_size), (self.rect.top + segment_size)
 
 
 """
@@ -60,10 +59,14 @@ def gen_next():
     """
     next_letter = random.choice(tetro_list)
     next_surface = tetro_surfaces[tetro_list.index(next_letter)]
+    if next_letter != O:
+        start = ((next_surface_width - (segment_size * len(next_letter))) // 2)
+    else:
+        start = (((next_surface_width - segment_size * 2) // 2) - segment_size)
     for row in range(len(next_letter)):
         for column in range(len(next_letter)):
             if next_letter[row][column] == 1:
-                location = [(segment_size + (segment_size * column)), (segment_size + (segment_size * row))]
+                location = [(start + (segment_size * column)), (3 * segment_size + (segment_size * row))]
                 new_segment = Segment(location, next_surface)
                 next_tetro.add(new_segment)
 
@@ -151,11 +154,10 @@ def shift_down():
 This function handles the clockwise rotation of the current tetro. The function first checks to make sure the current
 tetro is not the o piece (see documentation for O constant) and that the tetro has not landed yet. The function uses
 list comprehension to transpose the rows and columns and reverse the order of each row. This rotates the letter matrix
-by ninety degrees (more information can be found by looking into matrix rotation algorithms). A new tetro is generated,
-using the updated matrix, at the same spot using the tracking variables startx and starty. 
-Then the function checks if the tetro has exceeded the boundaries of the right or left walls or the floor of the play
-surface. Then it makes correction accordingly. Currently the code is repetitive and has three loops for each side.
-Future improvements may reduce the number of loops. 
+by ninety degrees (see documentation for more information). A new tetro is generated, using the updated matrix, at the
+same spot using the tracking variables startx and starty. Then the function checks if the tetro has exceeded the
+boundaries of the right or left walls or the floor of the play surface. Then it makes correction accordingly. Currently 
+the code is repetitive and has three loops for each side. Future improvements may reduce the number of loops. 
 """
 
 
@@ -284,7 +286,7 @@ play_surface_size = (play_surface_width, play_surface_height) = ((segment_size *
 play_surface_right, play_surface_bottom = (((screen_width - play_surface_width) // 2) + play_surface_width), \
                                           (((screen_height - play_surface_height) // 2) + play_surface_height)
 right_margin = (screen_width - play_surface_right)
-next_surface_size = next_surface_width, next_surface_height = ((segment_size * 5), (segment_size * 5))
+next_surface_size = next_surface_width, next_surface_height = ((segment_size * 5), (segment_size * 6))
 pygame.display.set_caption("TITLE PLACEHOLDER")
 pygame.time.Clock()
 bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)
