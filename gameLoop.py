@@ -59,6 +59,11 @@ def gen_next():
     """
     next_letter = random.choice(tetro_list)
     next_surface = tetro_surfaces[tetro_list.index(next_letter)]
+    """
+    The following code ensures the next tetromino is displayed in the center of the next piece surface. O requires
+    custom logic because O if offset within its matrix, so that it displayed at the correct starting point on the play
+    play surface. However this cause to not be properly display on the next piece surface.
+    """
     if next_letter != O:
         start = ((next_surface_width - (segment_size * len(next_letter))) // 2)
     else:
@@ -66,9 +71,27 @@ def gen_next():
     for row in range(len(next_letter)):
         for column in range(len(next_letter)):
             if next_letter[row][column] == 1:
+                """
+                The horizontal location is set to be in the center, but the vertical location is pushed down to allow
+                for room for the surface banner.
+                """
                 location = [(start + (segment_size * column)), (3 * segment_size + (segment_size * row))]
                 new_segment = Segment(location, next_surface)
                 next_tetro.add(new_segment)
+
+
+"""
+After each piece has dropped this function is called to check where it has landed. This is required so that falling
+tetrominos can be compared against the grid matrix to see if it has been blocked. The grid matrix will also be used to
+check if any lines have been completed.
+"""
+
+
+def check_pos():
+    global grid
+    for segment in current_tetro.sprites():
+        grid_xpos, grid_ypos = (segment.rect.left // segment_size), (segment.rect.top // segment_size + 2)
+        grid[grid_ypos][grid_xpos] = 1
 
 
 """
@@ -106,8 +129,21 @@ def shift_right():
     blocked = False
     if moving < delay:
         for segment in current_tetro.sprites():
-            if segment.rect.right >= play_surface_width:
+            if segment.rect.right >= play_surface_width - segment_size:
                 blocked = True
+        """
+        If the tetro has not hit any boundaries, the function checks to see if it has hit any other tetromino pieces.
+        It does this by checking its location on the grid matrix. Note that in the line if grid[][] == 1: the ypos and
+        xpos seem to be reversed. This is the case because of the difference between display parameters and the way the
+        grid matrix is accessed. Later version may change the shape of grid for conformity. Also note that grid_xpos has
+        a plus one. This to check if the piece is going to collide if it is dropped, else the piece will have to be
+        raised again.
+        """
+        if not blocked:
+            for segment in current_tetro.sprites():
+                grid_xpos, grid_ypos = (segment.rect.left // segment_size), (segment.rect.top // segment_size + 2)
+                if grid[grid_ypos][grid_xpos + 1] == 1:
+                    blocked = True
         if not blocked:
             for segment in current_tetro.sprites():
                 segment.rect.centerx += segment_size
@@ -128,6 +164,11 @@ def shift_left():
                 blocked = True
         if not blocked:
             for segment in current_tetro.sprites():
+                grid_xpos, grid_ypos = (segment.rect.left // segment_size), (segment.rect.top // segment_size + 2)
+                if grid[grid_ypos][grid_xpos - 1] == 1:
+                    blocked = True
+        if not blocked:
+            for segment in current_tetro.sprites():
                 segment.rect.centerx -= segment_size
             startx -= segment_size
 
@@ -141,9 +182,15 @@ def shift_down():
     global moving, starty
     blocked = False
     for segment in current_tetro.sprites():
-        if segment.rect.bottom >= play_surface_height:
+        if segment.rect.bottom >= play_surface_height - segment_size:
             blocked = True
             moving += 1
+    if not blocked:
+        for segment in current_tetro.sprites():
+            grid_xpos, grid_ypos = (segment.rect.left // segment_size), (segment.rect.top // segment_size + 2)
+            if grid[grid_ypos + 1][grid_xpos] == 1:
+                blocked = True
+                moving += 1
     if not blocked:
         for segment in current_tetro.sprites():
             segment.rect.centery += segment_size
@@ -259,15 +306,40 @@ tetro_surfaces = (i_surface, j_surface, l_surface, t_surface, o_surface, s_surfa
 
 """
 Segment size is fundamental to the program. It is the size of each tetromino segment. The start location of each tetro,
-play surface size, movement size, etc. are determined by segment_size.
+play surface size, movement size, etc. are determined by segment_size. The grid matrix keeps track of the location of
+dropped tetrominos and checks if falling tetrominos have been blocked.
 """
-segment_size = 36
+segment_size = 37
 starty = (-2 * segment_size)
 startx = (3 * segment_size)
+grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
 """
-Moving, leftmost, rightmost check if the the tetro has hit the right or left wall or the floor. USEREVENT is a custom
-event used in a timer event later on.
+Moving and delay coordinate falling pieces. If moving is less than delay the pieces is still falling, else the piece has
+dropped and a new piece is called. The delay variable allows the user to have a couple of moments for movement even
+if the piece has been blocked. THe seperate variable moving and blocked allows the piece to be stopped when it hits a
+barrier but still gives the user some loops for adjustments. USEREVENT is a custom event used in a timer event later on.
 """
 
 moving = delay = 5
@@ -341,6 +413,7 @@ def start_game():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+            check_pos()
             update_surface()
     pygame.quit()
 
