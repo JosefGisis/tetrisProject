@@ -324,7 +324,7 @@ j_surface = pygame.image.load("blue_segment.jpg")
 L_PIECE = [[0, 0, 1],
            [1, 1, 1],
            [0, 0, 0]]
-l_surface = pygame.image.load("coral_segment.jpg")
+l_surface = pygame.image.load("orange_segment.jpg")
 
 T_PIECE = [[0, 1, 0],
            [1, 1, 1],
