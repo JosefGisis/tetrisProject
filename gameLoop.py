@@ -64,7 +64,7 @@ def gen_next():
     custom logic because O if offset within its matrix, so that it displayed at the correct starting point on the play
     play surface. However this cause to not be properly display on the next piece surface.
     """
-    if next_letter != O:
+    if next_letter != O_PIECE:
         start = ((next_surface_width - (segment_size * len(next_letter))) // 2)
     else:
         start = (((next_surface_width - segment_size * 2) // 2) - segment_size)
@@ -212,14 +212,14 @@ See README file for a detailed explanation of the rotation functions.
 def cw_rotation():
     global current_letter, rotation_state, startx, starty
     blocked = False
-    if current_letter != O and moving < delay:
+    if current_letter != O_PIECE and moving < delay:
         rotated_letter = [[current_letter[j][i] for j in range(len(current_letter))]
                           for i in range(len(current_letter[0]))]
         for list in rotated_letter:
             list.reverse()
         gen_tetro(rotated_letter, current_surface)
         if move_blocked(0, 0):
-            if len(current_letter) < len(I):
+            if len(current_letter) < len(I_PIECE):
                 for i in range(len(cw_check)):
                     if i == rotation_state:
                         for j in range(len(cw_check[i])):
@@ -262,13 +262,13 @@ def cw_rotation():
 def ccw_rotation():
     global current_letter, rotation_state, startx, starty
     blocked = False
-    if current_letter != O and moving < delay:
+    if current_letter != O_PIECE and moving < delay:
         rotated_letter = [[current_letter[j][i] for j in range (len(current_letter[0]))]
                           for i in range(len(current_letter))]
         rotated_letter.reverse()
         gen_tetro(rotated_letter, current_surface)
         if move_blocked(0, 0):
-            if len(current_letter) < len(I):
+            if len(current_letter) < len(I_PIECE):
                 for i in range(len(ccw_check)):
                     if i == rotation_state:
                         for j in range(len(cw_check[i])):
@@ -310,46 +310,46 @@ def ccw_rotation():
 Most of the variables are declared in this section. Letter matrices are declared along with surfaces for the sake of
 clarity. Each letter (tetromino shape) has an image associated with it.
 """
-I = [[0, 0, 0, 0],
-     [1, 1, 1, 1],
-     [0, 0, 0, 0],
-     [0, 0, 0, 0]]
+I_PIECE = [[0, 0, 0, 0],
+           [1, 1, 1, 1],
+           [0, 0, 0, 0],
+           [0, 0, 0, 0]]
 i_surface = pygame.image.load("teal_segment.jpg")
 
-J = [[1, 0, 0],
-     [1, 1, 1],
-     [0, 0, 0]]
+J_PIECE = [[1, 0, 0],
+           [1, 1, 1],
+           [0, 0, 0]]
 j_surface = pygame.image.load("blue_segment.jpg")
 
-L = [[0, 0, 1],
-     [1, 1, 1],
-     [0, 0, 0]]
+L_PIECE = [[0, 0, 1],
+           [1, 1, 1],
+           [0, 0, 0]]
 l_surface = pygame.image.load("coral_segment.jpg")
 
-T = [[0, 1, 0],
-     [1, 1, 1],
-     [0, 0, 0]]
+T_PIECE = [[0, 1, 0],
+           [1, 1, 1],
+           [0, 0, 0]]
 t_surface = pygame.image.load("purple_segment.jpg")
 
 """
 O does not rotate. The matrix is larger than the shape to offset the tetro to start at the correct position.
 """
-O = [[0, 1, 1],
-     [0, 1, 1],
-     [0, 0, 0]]
+O_PIECE = [[0, 1, 1],
+           [0, 1, 1],
+           [0, 0, 0]]
 o_surface = pygame.image.load("magenta_segment.jpg")
 
-S = [[0, 1, 1],
+S_PIECE = [[0, 1, 1],
      [1, 1, 0],
      [0, 0, 0]]
 s_surface = pygame.image.load("green_segment.jpg")
 
-Z = [[1, 1, 0],
-     [0, 1, 1],
-     [0, 0, 0]]
+Z_PIECE = [[1, 1, 0],
+           [0, 1, 1],
+           [0, 0, 0]]
 z_surface = pygame.image.load("red_segment.jpg")
 
-tetro_list = (I, J, L, T, O, S, Z)
+tetro_list = (I_PIECE, J_PIECE, L_PIECE, T_PIECE, O_PIECE, S_PIECE, Z_PIECE)
 tetro_surfaces = (i_surface, j_surface, l_surface, t_surface, o_surface, s_surface, z_surface)
 
 """
