@@ -192,16 +192,16 @@ README file for a full explanation.This is the first version and will probably b
 Do not alter any check lists. Lists are calibrated to ensure tetrominos do not exceed play surface boundaries or collide
 with dropped tetrominos.
 """
-cw_check = [[[-1, 0], [0, 1], [1, -3], [-1, 0], [1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
+cw_check = [[[0, 1], [-1, 0], [1, -3], [-1, 0], [1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
             [[1, 0], [0, 1], [-1, -3], [1, 0], [-1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
 
-cw_ipiece_check = [[[-2, 0], [3, 0], [-3, -1], [3, 3], [-1, -2]], [[-1, 0], [3, 0], [-3, 2], [3, -3], [-2, 1]],
+cw_ipiece_check = [[[0, 2], [1, -2], [-3, -1], [3, 3], [-1, -2]], [[-1, 0], [3, 0], [-3, 2], [3, -3], [-2, 1]],
                    [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]], [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]]]
 
-ccw_check = [[[1, 0], [0, 1], [-1, -3], [1, 0], [-1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
+ccw_check = [[[0, 1], [1, 0], [-1, -3], [1, 0], [-1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
              [[-1, 0], [0, 1], [1, -3], [-1, 0], [1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
 
-ccw_ipiece_check = [[[-1, 0], [3, 0], [-3, 2], [3, -3], [-2, 1]], [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]],
+ccw_ipiece_check = [[[0, 2], [-1, -2], [0, 2], [3, -3], [-2, 1]], [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]],
                     [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]], [[-2, 0], [3, 0], [-3, -1], [3, 3], [-1, -2]]]
 
 """
@@ -255,6 +255,7 @@ def cw_rotation():
                 rotation_state += 1
             else:
                 rotation_state = 0
+            print(rotation_state)
         else:
             gen_tetro(current_letter, current_surface)
 
@@ -303,6 +304,7 @@ def ccw_rotation():
                 rotation_state -= 1
             else:
                 rotation_state = 3
+            print(rotation_state)
         else:
             gen_tetro(current_letter, current_surface)
 

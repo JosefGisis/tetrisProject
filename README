@@ -1,7 +1,10 @@
 This is the code for my first official Python project. It is a bare-bones tetris style game.
 - Josef Gisis 9/8/2023
 
+Surface images for tetris pieces and destroyed lines created by Josef Gisis
+
 Background image designed by rawpixel.com / Freepik
+
 ________________________________________________________________________________________________________________________
 
 DEVELOPEMENT INFORMATION
@@ -328,8 +331,8 @@ DEVELOPEMENT INFORMATION
     the tetrominos original location. In order to undo each prior test the list needs to be modified.
 
     Here are four lists for clockwise rotations, counterclockwise rotations, clockwise rotations for i piece, and
-    counterclockwise rotations for i piece. The last entry for each sublist is for returning the piece to original
-    location after failing rotation.
+    counterclockwise rotations for i piece. The last entry for each sublist is for returning the piece to its original
+    location if it fails rotation.
 
     cw_check = [[[-1, 0], [0, 1], [1, -3], [-1, 0], [1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
                 [[1, 0], [0, 1], [-1, -3], [1, 0], [-1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
@@ -343,3 +346,33 @@ DEVELOPEMENT INFORMATION
     ccw_lpiece_check = [[[-1, 0], [3, 0], [-3, 2], [3, -3], [-2, 1]], [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]],
                         [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]], [[-2, 0], [3, 0], [-3, -1], [3, 3], [-1, -2]]]
 
+    The issue with these lists is that when they are implemented, tetrominos bounced of the bottom of the floor of the
+    play surface shift left or right (they do not spin in place). Here is an altered list:
+
+    cw_check = [[[0, 1], [-1, 0], [1, -3], [-1, 0], [1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
+            [[1, 0], [0, 1], [-1, -3], [1, 0], [-1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
+
+    cw_ipiece_check = [[[0, 2], [1, -2], [-3, -1], [3, 3], [-1, -2]], [[-1, 0], [3, 0], [-3, 2], [3, -3], [-2, 1]],
+                       [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]], [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]]]
+
+    ccw_check = [[[0, 1], [1, 0], [-1, -3], [1, 0], [-1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
+                 [[-1, 0], [0, 1], [1, -3], [-1, 0], [1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
+
+    ccw_ipiece_check = [[[0, 2], [-1, -2], [0, 2], [3, -3], [-2, 1]], [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]],
+                        [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]], [[-2, 0], [3, 0], [-3, -1], [3, 3], [-1, -2]]]
+
+    Note the changes in the first list in each list. Continued testing required to find the optimal rotation tests.
+
+    Or a simpler version:
+
+    cw_check = [[[0, 1], [-1, -1], [2, 0], [-1, -1], [0, 1]], [[1, 0], [-1, 1], [0, -2], [-1, 1], [1, 0]],
+                [[0, -1], [1, 1], [-2, 0], [1, 1], [0, -1]], [[-1, 0], [1, -1], [0, 2], [1, -1], [-1, 0]]]
+
+    cw_ipiece_check = [[[0, 2], [-1, -2], [3, 0], [-2, -1], [0, 1]], [[2, 0], [-2, 1], [0, -3], [-1, 2], [1, 0]],
+                       [[0, -2], [1, 2], [-3, 0], [2, 1], [0, -1]], [[-2, 0], [2, -1], [0, 3], [1, -2], [-1, 0]]]
+
+    ccw_check = [[[,], [,], [,], [,], [,]], [[,], [,], [,], [,], [,]],
+                 [[,], [,], [,], [,], [,]], [[,], [,], [,], [,], [,]]]
+
+    ccw_ipiece_check = [[[,], [,], [,], [,], [,]], [[,], [,], [,], [,], [,]],
+                        [[,], [,], [,], [,], [,]], [[,], [,], [,], [,], [,]]]
