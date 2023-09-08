@@ -2,8 +2,8 @@
 This is some practice for the main game loop of my tetris projects.
 Quick note: Tetromino refers to the seven different tetris shapes, each shape is associated with a letter, tetro is
 short for tetromino, segment refers to one of the four parts of each tetromino, matrix refers to the list of lists that
-structures each tetromino shape, and surface (in regards to segments) refers to images displayed on each segment to
-enhance their appearance and give them colors.
+structures each tetromino shape, and surface (regarding segments) refers to images displayed on each segment to enhance
+their appearance and give them colors.
 """
 import sys, pygame, random
 
@@ -97,14 +97,15 @@ def check_pos():
 """
 Dropped_segments and update_surface are responsible for handling each tetro and the game loop, once the tetro lands.
 Each segment is transferred to dropped_segments, the current tetro is emptied, variables startx and starty are reset,
-current_letter and current_surface take their values from the next tetromino, a new tetro is generated, and a new next
-tetromino is created.
+current_letter and current_surface take their values from the next tetromino, a new tetro is generated, the rotation
+status is set to its spawn state, and a new next tetromino is created.
 """
 dropped_segments = pygame.sprite.Group()
 
 
 def update_surface():
-    global starty, startx, current_tetro, moving, next_letter, next_surface, current_letter, current_surface
+    global starty, startx, current_tetro, moving, next_letter, next_surface, current_letter, current_surface, \
+        rotation_state
     for segment in current_tetro.sprites():
         dropped_segments.add(segment)
     current_tetro.empty()
@@ -114,84 +115,64 @@ def update_surface():
     next_tetro.empty()
     gen_next()
     moving = 0
+    rotation_state = 0
 
 
 """
-This function moves the tetro to the right. It checks if the tetro has hit the right wall, and if it has not, the tetro
-is shifted to the right. The startx variable is also updated, so a new tetromino can be updated at the same position.
-The shift_right function also makes the leftmost condition false because the piece has been moved away from the right
-wall.
+The move_blocked function checks if the tetro can make another move. The function checks if the piece can move without
+being blocked by adding the xspeed and yspeed variables (speed refers to the jump size and direction). If the function
+returns true, the move is blocked (see README file for more information on collision detection).
+"""
+
+
+def move_blocked(xspeed, yspeed):
+    for segment in current_tetro:
+        """
+        Checks the tetromino if it will be blocked by the right or left wall or floor of the play surface. The next
+        location is obtained by taking the tetro's current location ans adds the xspeed and yspeed respectively.
+        """
+        next_location = [(segment.rect.left + xspeed), (segment.rect.top + yspeed)]
+        if next_location[0] < 0 or next_location[0] >= play_surface_width or next_location[1] >= play_surface_height:
+            return True
+        """
+        The function checks if the tetromino is going to collide with any dropped tetrominos. 
+        """
+        for square in dropped_segments:
+            if next_location[0] == square.rect.left and next_location[1] == square.rect.top:
+                return True
+
+
+"""
+The three shift functions move each square by a given size and updates the startx or starty variables to keep track of
+the pieces location (startx and starty are used when a new tetromino is generated after each rotation (see README for 
+more information)). Shift down increments the moving variable. When the moving variable meets the delay variable, the
+piece has officially landed and a new piece is generated.
 """
 
 
 def shift_right():
     global startx
-    blocked = False
     if moving < delay:
-        for segment in current_tetro.sprites():
-            if segment.rect.right >= play_surface_width - segment_size:
-                blocked = True
-        """
-        If the tetro has not hit any boundaries, the function checks to see if it has hit any other tetromino pieces.
-        It does this by checking its location on the grid matrix. Note that in the line if grid[][] == 1: the ypos and
-        xpos seem to be reversed. This is the case because of the difference between display parameters and the way the
-        grid matrix is accessed. Later version may change the shape of grid for conformity. Also note that grid_xpos has
-        a plus one. This to check if the piece is going to collide if it is dropped, else the piece will have to be
-        raised again.
-        """
-        if not blocked:
-            for segment in current_tetro.sprites():
-                grid_xpos, grid_ypos = (segment.rect.left // segment_size), (segment.rect.top // segment_size + 2)
-                if grid[grid_ypos][grid_xpos + 1] == 1:
-                    blocked = True
-        if not blocked:
+        if not move_blocked(segment_size, 0):
             for segment in current_tetro.sprites():
                 segment.rect.centerx += segment_size
             startx += segment_size
 
 
-"""
-See previous doc.
-"""
-
-
 def shift_left():
     global startx
-    blocked = False
     if moving < delay:
-        for segment in current_tetro.sprites():
-            if segment.rect.left <= 0:
-                blocked = True
-        if not blocked:
-            for segment in current_tetro.sprites():
-                grid_xpos, grid_ypos = (segment.rect.left // segment_size), (segment.rect.top // segment_size + 2)
-                if grid[grid_ypos][grid_xpos - 1] == 1:
-                    blocked = True
-        if not blocked:
+        if not move_blocked(-segment_size, 0):
             for segment in current_tetro.sprites():
                 segment.rect.centerx -= segment_size
             startx -= segment_size
 
 
-"""
-See previous doc.
-"""
-
-
 def shift_down():
     global moving, starty
-    blocked = False
-    for segment in current_tetro.sprites():
-        if segment.rect.bottom >= play_surface_height - segment_size:
-            blocked = True
-            moving += 1
-    if not blocked:
-        for segment in current_tetro.sprites():
-            grid_xpos, grid_ypos = (segment.rect.left // segment_size), (segment.rect.top // segment_size + 2)
-            if grid[grid_ypos + 1][grid_xpos] == 1:
-                blocked = True
-                moving += 1
-    if not blocked:
+    if move_blocked(0, segment_size):
+        moving += 1
+    else:
         for segment in current_tetro.sprites():
             segment.rect.centery += segment_size
         starty += segment_size
@@ -203,63 +184,130 @@ tetro is not the o piece (see documentation for O constant) and that the tetro h
 list comprehension to transpose the rows and columns and reverse the order of each row. This rotates the letter matrix
 by ninety degrees (see documentation for more information). A new tetro is generated, using the updated matrix, at the
 same spot using the tracking variables startx and starty. Then the function checks if the tetro has exceeded the
-boundaries of the right or left walls or the floor of the play surface. Then it makes correction accordingly. Currently 
-the code is repetitive and has three loops for each side. Future improvements may reduce the number of loops. 
+boundaries of the right or left walls or the floor of the play surface. If there is a collision each piece is tested in
+multiple locations (see lists below for location tests) until there is no longer a collision. If the piece cannot be
+cleared, the collision fails. The logic behind the loop is too detailed for a full explanation; please check out the
+README file for a full explanation.This is the first version and will probably be improved later.
+
+Do not alter any check lists. Lists are calibrated to ensure tetrominos do not exceed play surface boundaries or collide
+with dropped tetrominos.
+"""
+cw_check = [[[-1, 0], [0, 1], [1, -3], [-1, 0], [1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
+            [[1, 0], [0, 1], [-1, -3], [1, 0], [-1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
+
+cw_ipiece_check = [[[-2, 0], [3, 0], [-3, -1], [3, 3], [-1, -2]], [[-1, 0], [3, 0], [-3, 2], [3, -3], [-2, 1]],
+                   [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]], [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]]]
+
+ccw_check = [[[1, 0], [0, 1], [-1, -3], [1, 0], [-1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
+             [[-1, 0], [0, 1], [1, -3], [-1, 0], [1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
+
+ccw_ipiece_check = [[[-1, 0], [3, 0], [-3, 2], [3, -3], [-2, 1]], [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]],
+                    [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]], [[-2, 0], [3, 0], [-3, -1], [3, 3], [-1, -2]]]
+
+"""
+See README file for a detailed explanation of the rotation functions.
 """
 
 
 def cw_rotation():
-    global current_letter
+    global current_letter, rotation_state, startx, starty
+    blocked = False
     if current_letter != O and moving < delay:
-        rotated_letter = [[current_letter[j][i] for j in range(len(current_letter))] for i in range(len(current_letter[0]))]
+        rotated_letter = [[current_letter[j][i] for j in range(len(current_letter))]
+                          for i in range(len(current_letter[0]))]
         for list in rotated_letter:
             list.reverse()
-        current_letter = rotated_letter
-        gen_tetro(current_letter, current_surface)
-        for segment in current_tetro:
-            if segment.rect.left < 0:
-                difference = -segment.rect.left
-                for segment in current_tetro:
-                    segment.rect.left += difference
-            elif segment.rect.left >= play_surface_width:
-                difference = (segment.rect.right - play_surface_width)
-                for segment in current_tetro:
-                    segment.rect.left -= difference
-            elif segment.rect.top >= play_surface_height:
-                difference = (segment.rect.bottom - play_surface_height)
-                for segment in current_tetro:
-                    segment.rect.left -= difference
+        gen_tetro(rotated_letter, current_surface)
+        if move_blocked(0, 0):
+            if len(current_letter) < len(I):
+                for i in range(len(cw_check)):
+                    if i == rotation_state:
+                        for j in range(len(cw_check[i])):
+                            for segment in current_tetro:
+                                segment.rect.left += (cw_check[i][j][0] * segment_size)
+                                segment.rect.top -= (cw_check[i][j][1] * segment_size)
+                            startx += (cw_check[i][j][0] * segment_size)
+                            starty -= (cw_check[i][j][1] * segment_size)
+                            if move_blocked(0, 0):
+                                blocked = True
+                            else:
+                                blocked = False
+                                break
+            else:
+                for i in range(len(cw_ipiece_check)):
+                    if i == rotation_state:
+                        for j in range(len(cw_ipiece_check[i])):
+                            for segment in current_tetro:
+                                segment.rect.left += (cw_ipiece_check[i][j][0] * segment_size)
+                                segment.rect.top -= (cw_ipiece_check[i][j][1] * segment_size)
+                            startx += (cw_ipiece_check[i][j][0] * segment_size)
+                            starty -= (cw_ipiece_check[i][j][1] * segment_size)
+                            if move_blocked(0, 0):
+                                blocked = True
+                            else:
+                                blocked = False
+                                break
 
 
-"""
-Same as the previous function. The rows and columns are transposed. However, unlike the previous function, the rows are
-reversed rather than the contents of each row being reversed.
-"""
+        if not blocked:
+            current_letter = rotated_letter
+            if rotation_state < 3:
+                rotation_state += 1
+            else:
+                rotation_state = 0
+        else:
+            gen_tetro(current_letter, current_surface)
 
 
 def ccw_rotation():
-    global current_letter
+    global current_letter, rotation_state, startx, starty
+    blocked = False
     if current_letter != O and moving < delay:
-        rotated_letter = [[current_letter[j][i] for j in range (len(current_letter[0]))] for i in range(len(current_letter))]
+        rotated_letter = [[current_letter[j][i] for j in range (len(current_letter[0]))]
+                          for i in range(len(current_letter))]
         rotated_letter.reverse()
-        current_letter = rotated_letter
-        gen_tetro(current_letter, current_surface)
-        for segment in current_tetro:
-            if segment.rect.left < 0:
-                difference = -segment.rect.left
-                for segment in current_tetro:
-                    segment.rect.left += difference
-            elif segment.rect.left >= play_surface_width:
-                difference = (segment.rect.right - play_surface_width)
-                for segment in current_tetro:
-                    segment.rect.left -= difference
-            elif segment.rect.top >= play_surface_height:
-                difference = (segment.rect.bottom - play_surface_height)
-                for segment in current_tetro:
-                    segment.rect.left -= difference
+        gen_tetro(rotated_letter, current_surface)
+        if move_blocked(0, 0):
+            if len(current_letter) < len(I):
+                for i in range(len(ccw_check)):
+                    if i == rotation_state:
+                        for j in range(len(cw_check[i])):
+                            for segment in current_tetro:
+                                segment.rect.left += (ccw_check[i][j][0] * segment_size)
+                                segment.rect.top -= (ccw_check[i][j][1] * segment_size)
+                            startx += (ccw_check[i][j][0] * segment_size)
+                            starty -= (ccw_check[i][j][1] * segment_size)
+                            if move_blocked(0, 0):
+                                blocked = True
+                            else:
+                                blocked = False
+                                break
+            else:
+                for i in range(len(ccw_ipiece_check)):
+                    if i == rotation_state:
+                        for j in range(len(ccw_ipiece_check[i])):
+                            for segment in current_tetro:
+                                segment.rect.left += (ccw_ipiece_check[i][j][0] * segment_size)
+                                segment.rect.top -= (ccw_ipiece_check[i][j][1] * segment_size)
+                            startx += (ccw_ipiece_check[i][j][0] * segment_size)
+                            starty -= (ccw_ipiece_check[i][j][1] * segment_size)
+                            if move_blocked(0, 0):
+                                blocked = True
+                            else:
+                                blocked = False
+                                break
+
+        if not blocked:
+            current_letter = rotated_letter
+            if rotation_state > 0:
+                rotation_state -= 1
+            else:
+                rotation_state = 3
+        else:
+            gen_tetro(current_letter, current_surface)
 
 """
-Most of the varables are declared in this section. Letter matrices are declared along with surfaces for the sake of
+Most of the variables are declared in this section. Letter matrices are declared along with surfaces for the sake of
 clarity. Each letter (tetromino shape) has an image associated with it.
 """
 I = [[0, 0, 0, 0],
@@ -305,11 +353,22 @@ tetro_list = (I, J, L, T, O, S, Z)
 tetro_surfaces = (i_surface, j_surface, l_surface, t_surface, o_surface, s_surface, z_surface)
 
 """
-Segment size is fundamental to the program. It is the size of each tetromino segment. The start location of each tetro,
-play surface size, movement size, etc. are determined by segment_size. The grid matrix keeps track of the location of
-dropped tetrominos and checks if falling tetrominos have been blocked.
+Segment size is the size of each tetromino segment and is essential to most other aspect of the program. The start 
+location of each tetro, play surface size, movement size, etc. are determined by segment_size. Rotation state is the
+rotation degree of each tetromino (0, 90, 180, and 270). The rotation state of each piece affects its rotation
+behaviour. Current letter and next letter belong to the current tetro and next tetro respectively (same for the next
+surface and current surface). startx and starty keep track of the top left corner of each tetromino and keep track of
+the location of each current tetromino for when they are regenerated after each successful rotation (see rotation 
+functions). These need to be stored as global variables rather than attributes because each tetro is tracked as sprite
+group rather than a specific class. The grid matrix keeps track of the location of dropped tetrominos. The grid is two
+rows higher than the size of the play surface because tetros start tow segment sizes of the play surface.
 """
 segment_size = 37
+rotation_state = 0
+current_letter = 0
+next_letter = 0
+next_surface = 0
+current_surface = 0
 starty = (-2 * segment_size)
 startx = (3 * segment_size)
 grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -371,7 +430,6 @@ gen_next()
 
 
 def start_game():
-    global rightmost, leftmost
     running = True
     while running:
         """
