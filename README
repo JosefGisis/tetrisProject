@@ -361,18 +361,34 @@ DEVELOPEMENT INFORMATION
     ccw_ipiece_check = [[[0, 2], [-1, -2], [0, 2], [3, -3], [-2, 1]], [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]],
                         [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]], [[-2, 0], [3, 0], [-3, -1], [3, 3], [-1, -2]]]
 
-    Note the changes in the first list in each list. Continued testing required to find the optimal rotation tests.
+    Note the changes in the first list in each list.
 
     Or a simpler version:
 
     cw_check = [[[0, 1], [-1, -1], [2, 0], [-1, -1], [0, 1]], [[1, 0], [-1, 1], [0, -2], [-1, 1], [1, 0]],
                 [[0, -1], [1, 1], [-2, 0], [1, 1], [0, -1]], [[-1, 0], [1, -1], [0, 2], [1, -1], [-1, 0]]]
 
-    cw_ipiece_check = [[[0, 2], [-1, -2], [3, 0], [-2, -1], [0, 1]], [[2, 0], [-2, 1], [0, -3], [-1, 2], [1, 0]],
-                       [[0, -2], [1, 2], [-3, 0], [2, 1], [0, -1]], [[-2, 0], [2, -1], [0, 3], [1, -2], [-1, 0]]]
+    cw_ipiece_check = [[[0, 2], [0, -3], [-2, 1], [3, 0], [-1, 0]], [[2, 0], [-3, 0], [1, 2], [0, -3], [0, 1]],
+                       [[0, -2], [0, 3], [2, -1], [-3, 0], [1, 0]], [[-2, 0], [3, 0], [-1, -2], [0, 3], [0, -1]]]
 
-    ccw_check = [[[,], [,], [,], [,], [,]], [[,], [,], [,], [,], [,]],
-                 [[,], [,], [,], [,], [,]], [[,], [,], [,], [,], [,]]]
+    ccw_check = [[[0, 1], [1, -1], [-2, 0], [1, -1], [0, 1]], [[1, 0], [-1, -1], [0, 2], [-1, -1], [1, 0]],
+                 [[0, -1], [-1, 1], [2, 0], [-1, 1], [0, -1]], [[-1, 0], [1, 1], [0, -2], [1, 1], [-1 ,0]]]
 
-    ccw_ipiece_check = [[[,], [,], [,], [,], [,]], [[,], [,], [,], [,], [,]],
-                        [[,], [,], [,], [,], [,]], [[,], [,], [,], [,], [,]]]
+    ccw_ipiece_check = [[[0, 2], [0, -3], [2, 1], [-3, 0], [1, 0]], [[2, 0], [-3, 0], [1, -2], [0, 3], [0, -1]],
+                        [[0, -2], [0, 3], [-2, -1], [3, 0], [-1, 0]], [[-2, 0], [3, 0], [-1, 2], [0, -3], [0, 1]]]
+
+    Lighter versions are also possible. For example, except for the i piece, all tetrominos can have a uniform test of
+    testing all four non-diagonal adjacent spots (0, 1): right, (0, -1): down, (-1, 0): left, and (0, 1): up. Althout it
+    is not the fastest, this method can be used regardless of angle of rotation and whether it is being rotated
+    clockwise or counterclockwise. I piece would have to be tested 2 right, 1 down, 2 left, 1 up, 1 right, 2 down,
+    1 left, and 2 up. The upside to this method would be that it would require fewer conditions, but the downside would
+    be that it would require more tests for every piece.
+
+    Continued testing is required to find the optimal rotation tests.
+
+    In summary, each tetromino is displayed using a letter matrix. When the user rotates the tetromino, one the rotation
+    function uses a list comprehension method to rotate the letter. Then a new tetromino is generated using the rotated
+    list. The rotated piece is then checked if it is blocked. If the piece is blocked then depending on the kind of tet-
+    romino, the degree of rotation, and depending if it is being rotated clockwise or counterclockwise a series of test
+    locations are applied to see which is the first one available. If none of the locations are available, the piece is
+    returned to its original location and the rotation is cancelled.
