@@ -363,7 +363,7 @@ functions). These need to be stored as global variables rather than attributes b
 group rather than a specific class. The grid matrix keeps track of the location of dropped tetrominos. The grid is two
 rows higher than the size of the play surface because tetros start tow segment sizes of the play surface.
 """
-segment_size = 37
+segment_size = 36
 rotation_state = 0
 current_letter = 0
 next_letter = 0
