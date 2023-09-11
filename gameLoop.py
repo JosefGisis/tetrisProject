@@ -192,6 +192,8 @@ README file for a full explanation.This is the first version and will probably b
 Do not alter any check lists. Lists are calibrated to ensure tetrominos do not exceed play surface boundaries or collide
 with dropped tetrominos.
 """
+# TODO: test different rotation testing patterns
+
 cw_check = [[[0, 1], [-1, -1], [2, 0], [-1, -1], [0, 1]], [[1, 0], [-1, 1], [0, -2], [-1, 1], [1, 0]],
             [[0, -1], [1, 1], [-2, 0], [1, 1], [0, -1]], [[-1, 0], [1, -1], [0, 2], [1, -1], [-1, 0]]]
 
@@ -207,6 +209,7 @@ ccw_ipiece_check = [[[0, 2], [0, -3], [2, 1], [-3, 0], [1, 0]], [[2, 0], [-3, 0]
 """
 See README file for a detailed explanation of the rotation functions.
 """
+# TODO: break rotation into smaller functions
 
 
 def cw_rotation():
@@ -340,8 +343,8 @@ O_PIECE = [[0, 1, 1],
 o_surface = pygame.image.load("magenta_segment.jpg")
 
 S_PIECE = [[0, 1, 1],
-     [1, 1, 0],
-     [0, 0, 0]]
+           [1, 1, 0],
+           [0, 0, 0]]
 s_surface = pygame.image.load("green_segment.jpg")
 
 Z_PIECE = [[1, 1, 0],
@@ -371,6 +374,10 @@ next_surface = 0
 current_surface = 0
 starty = (-2 * segment_size)
 startx = (3 * segment_size)
+
+# TODO: grid may not be necessary
+# TODO: create list of dropped tetromino rows
+
 grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -428,7 +435,6 @@ Sets the first next tetro. This starts the cycle of current and next tetro gener
 """
 gen_next()
 
-
 def start_game():
     running = True
     while running:
@@ -436,11 +442,20 @@ def start_game():
         if moving checks to see if the tetro has landed yet. It it has not, the program checks for user input. Else the
         a new piece is generated. The else condition also checks if the user has cancelled the game.
         """
+
+        # TODO: create loop to handle game over function
+        # TODO: create ESC event to handle user pauses
+        # TODO: create fast drop user event
+        # TODO: create instant drop user event
+
         if moving < delay:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
+
+                    # TODO: user should be able to hold down right and left keys
+
                     if event.key == pygame.K_RIGHT:
                         shift_right()
                     elif event.key == pygame.K_LEFT:
@@ -461,6 +476,9 @@ def start_game():
             current_tetro.draw(play_surface)
             dropped_segments.draw(play_surface)
             next_tetro.draw(next_tetro_surface)
+            pygame.draw.rect(screen, (0, 0, 0), [((screen_width - play_surface_width) // 2) - 6,
+                                       ((screen_height - play_surface_height) // 2) - 6,
+                                                 play_surface_width + 11, play_surface_height + 11])
             screen.blit(play_surface, (((screen_width - play_surface_width) // 2),
                                        ((screen_height - play_surface_height) // 2)))
             screen.blit(next_tetro_surface, ((((right_margin - next_surface_width) // 2) + play_surface_right),
