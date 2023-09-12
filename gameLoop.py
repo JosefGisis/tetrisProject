@@ -81,34 +81,49 @@ def gen_next():
 
 
 """
-After each piece has dropped this function is called to check where it has landed. This is required so that falling
-tetrominos can be compared against the grid matrix to see if it has been blocked. The grid matrix will also be used to
-check if any lines have been completed.
-"""
-
-
-def check_pos():
-    global grid
-    for segment in current_tetro.sprites():
-        grid_xpos, grid_ypos = (segment.rect.left // segment_size), (segment.rect.top // segment_size + 2)
-        grid[grid_ypos][grid_xpos] = 1
-
-
-"""
-Dropped_segments and update_surface are responsible for handling each tetro and the game loop, once the tetro lands.
+Dropped_segments and new_tetro are responsible for handling each tetro and the game loop, once the tetro lands.
 Each segment is transferred to dropped_segments, the current tetro is emptied, variables startx and starty are reset,
 current_letter and current_surface take their values from the next tetromino, a new tetro is generated, the rotation
 status is set to its spawn state, and a new next tetromino is created.
 """
-dropped_segments = pygame.sprite.Group()
 
 
-def update_surface():
+def check_pos():
+    for segment in current_tetro.sprites():
+        dropped_segments[segment.rect.top // segment_size].add(segment)
+    current_tetro.empty()
+
+
+def get_lines():
+    filled_lines = []
+    print("filled line", filled_lines)
+    i = 0
+    for row in dropped_segments:
+        i = 0
+        for segment in row.sprites():
+            if i == 9:
+                filled_lines.append(dropped_segments.index(row))
+            else:
+                i += 1
+    return filled_lines
+
+
+def filled_lines_handler():
+    filled_lines = get_lines()
+    if filled_lines:
+        for row in dropped_segments:
+            if dropped_segments.index(row) in (filled_lines):
+                row.empty()
+        for i in range((filled_lines[0] -1), -1, -1):
+            for segment in dropped_segments[i].sprites():
+                segment.rect.top += segment_size * len(filled_lines)
+                dropped_segments[i + len(filled_lines)].add(segment)
+            dropped_segments[i].empty()
+    filled_lines.clear()
+
+def new_tetro():
     global starty, startx, current_tetro, dropped, next_letter, next_surface, current_letter, current_surface, \
         rotation_state
-    for segment in current_tetro.sprites():
-        dropped_segments.add(segment)
-    current_tetro.empty()
     startx, starty = (3 * segment_size), (-2 * segment_size)
     current_letter, current_surface = next_letter, next_surface
     gen_tetro(current_letter, current_surface)
@@ -137,9 +152,10 @@ def move_blocked(xspeed, yspeed):
         """
         The function checks if the tetromino is going to collide with any dropped tetrominos. 
         """
-        for square in dropped_segments:
-            if next_location[0] == square.rect.left and next_location[1] == square.rect.top:
-                return True
+        for dropped_row in dropped_segments:
+            for square in dropped_row.sprites():
+                if next_location[0] == square.rect.left and next_location[1] == square.rect.top:
+                    return True
 
 
 """
@@ -385,8 +401,9 @@ behaviour. Current letter and next letter belong to the current tetro and next t
 surface and current surface). startx and starty keep track of the top left corner of each tetromino and keep track of
 the location of each current tetromino for when they are regenerated after each successful rotation (see rotation 
 functions). These need to be stored as global variables rather than attributes because each tetro is tracked as sprite
-group rather than a specific class. The grid matrix keeps track of the location of dropped tetrominos. The grid is two
-rows higher than the size of the play surface because tetros start two segment sizes of the play surface.
+group rather than a specific class. dropped_segments is a list of sprite groups that tracks all of the fallen 
+tetrominos. Fallen pieces are kept in seperate groups depending on their row in order to track which lines have been
+filled.
 """
 segment_size = 36
 rotation_state = 0
@@ -397,31 +414,10 @@ current_surface = 0
 starty = (-2 * segment_size)
 startx = (3 * segment_size)
 
-# TODO: grid may not be necessary
-# TODO: create list of dropped tetromino rows
-
-grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+dropped_segments = []
+for i in range(20):
+    dropped_row = pygame.sprite.Group()
+    dropped_segments.append(dropped_row)
 
 """
 Moving and grace_period coordinate falling pieces. If dropped is less than grace_period the pieces is still falling, 
@@ -456,6 +452,8 @@ next_surface_size = next_surface_width, next_surface_height = ((segment_size * 5
 pygame.display.set_caption("TITLE PLACEHOLDER")
 clock = pygame.time.Clock()
 bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)
+completed_line_image1 = pygame.image.load("line_completed1.jpg")
+completed_line_image2 = pygame.image.load("line_completed2.jpg")
 pygame.time.set_timer(USEREVENT, 250)
 
 """
@@ -465,7 +463,7 @@ gen_next()
 
 
 def start_game():
-    global prev_shift_time, prev_drop_time
+    global prev_shift_time, prev_drop_time, play_surface
     clock.tick(30)
     running = True
     while running:
@@ -553,7 +551,8 @@ def start_game():
             play_surface = pygame.Surface(play_surface_size)
             next_tetro_surface = pygame.Surface(next_surface_size)
             current_tetro.draw(play_surface)
-            dropped_segments.draw(play_surface)
+            for dropped_row in dropped_segments:
+                dropped_row.draw(play_surface)
             next_tetro.draw(next_tetro_surface)
             pygame.draw.rect(screen, (0, 0, 0), [((screen_width - play_surface_width) // 2) - 6,
                                                  ((screen_height - play_surface_height) // 2) - 6,
@@ -569,7 +568,8 @@ def start_game():
                 if event.type == pygame.QUIT:
                     running = False
             check_pos()
-            update_surface()
+            filled_lines_handler()
+            new_tetro()
     pygame.quit()
 
 
