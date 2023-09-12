@@ -81,30 +81,34 @@ def gen_next():
 
 
 """
-Dropped_segments and new_tetro are responsible for handling each tetro and the game loop, once the tetro lands.
-Each segment is transferred to dropped_segments, the current tetro is emptied, variables startx and starty are reset,
-current_letter and current_surface take their values from the next tetromino, a new tetro is generated, the rotation
-status is set to its spawn state, and a new next tetromino is created.
+The following set of functions handle fallen tetrominos and line completion. check_pos checks the location of each tetro
+after it has landed. Then the tetromino's segments are assigned to a sprite group depending on its vertical location.
+The group is accessed through an index in the dropped segments list. 
+get_lines returns a list of all the lines that have not been filled. The function iterates through the dropped_segments
+list and iterates through each sprite groupo and increments i by one for every sprite within the group. When i equals 9
+(that is it has be incremented 10 times) the line is added to the filled_lines list. Once the function has iterated
+through all 20 rows, the function returns filled_lines. Note: line, if dropped_segments[row]: tests if there is anything
+in that row and skips otherwise.
+filled_line_handler empties all the filled rows and moves down all the above segments (see function for more
+documentation).
 """
 
 
 def check_pos():
     for segment in current_tetro.sprites():
         dropped_segments[segment.rect.top // segment_size].add(segment)
-    current_tetro.empty()
 
 
 def get_lines():
     filled_lines = []
-    print("filled line", filled_lines)
     i = 0
-    for row in dropped_segments:
-        i = 0
-        for segment in row.sprites():
-            if i == 9:
-                filled_lines.append(dropped_segments.index(row))
-            else:
-                i += 1
+    for row in range(len(dropped_segments)):
+        if dropped_segments[row]:
+            for segment in dropped_segments[row]:
+                if i == 9:
+                    filled_lines.append(row)
+                else: i += 1
+            i = 0
     return filled_lines
 
 
@@ -114,12 +118,13 @@ def filled_lines_handler():
         for row in dropped_segments:
             if dropped_segments.index(row) in (filled_lines):
                 row.empty()
-        for i in range((filled_lines[0] -1), -1, -1):
+        for i in range((filled_lines[0]) -1, -1, -1):
             for segment in dropped_segments[i].sprites():
                 segment.rect.top += segment_size * len(filled_lines)
                 dropped_segments[i + len(filled_lines)].add(segment)
             dropped_segments[i].empty()
     filled_lines.clear()
+
 
 def new_tetro():
     global starty, startx, current_tetro, dropped, next_letter, next_surface, current_letter, current_surface, \
@@ -540,7 +545,7 @@ def start_game():
                     """
                     Shift down is passed a one millisecond argument to extend the grace period.
                     """
-                    shift_down(1)
+                    shift_down(5)
                     prev_drop_time = pygame.time.get_ticks()
 
             """
