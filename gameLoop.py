@@ -104,7 +104,7 @@ dropped_segments = pygame.sprite.Group()
 
 
 def update_surface():
-    global starty, startx, current_tetro, moving, next_letter, next_surface, current_letter, current_surface, \
+    global starty, startx, current_tetro, dropped, next_letter, next_surface, current_letter, current_surface, \
         rotation_state
     for segment in current_tetro.sprites():
         dropped_segments.add(segment)
@@ -114,7 +114,7 @@ def update_surface():
     gen_tetro(current_letter, current_surface)
     next_tetro.empty()
     gen_next()
-    moving = 0
+    dropped = 0
     rotation_state = 0
 
 
@@ -145,14 +145,15 @@ def move_blocked(xspeed, yspeed):
 """
 The three shift functions move each square by a given size and updates the startx or starty variables to keep track of
 the pieces location (startx and starty are used when a new tetromino is generated after each rotation (see README for 
-more information)). Shift down increments the moving variable. When the moving variable meets the delay variable, the
-piece has officially landed and a new piece is generated.
+more information)). Shift down increments the dropped variable if its descent is blocked. When the dropped variable
+meets the grace_period variable, the piece has officially landed and a new piece is generated. The purpose of the 
+dropped variable is to give the player a grace period to adjust the tetro after it has dropped.  
 """
 
 
 def shift_right():
     global startx
-    if moving < delay:
+    if dropped < grace_period:
         if not move_blocked(segment_size, 0):
             for segment in current_tetro.sprites():
                 segment.rect.centerx += segment_size
@@ -161,21 +162,42 @@ def shift_right():
 
 def shift_left():
     global startx
-    if moving < delay:
+    if dropped < grace_period:
         if not move_blocked(-segment_size, 0):
             for segment in current_tetro.sprites():
                 segment.rect.centerx -= segment_size
             startx -= segment_size
 
 
-def shift_down():
-    global moving, starty
+"""
+Shift down has a special optional argument that checks if the user is speeding up the descent of the tetromino. When the
+player performs an accelerated drop dropped, the dropped variable may shorten the duration the user can adjust the tetro
+after its drop. The optional argument slows down the grace period. However, if the player continues to hold down the 
+accelerated descent button after the tetro has dropped, the grace period will still be shortened. Future versions may 
+correct this detail.
+"""
+
+
+def shift_down(increment=10):
+    global dropped, starty
     if move_blocked(0, segment_size):
-        moving += 1
+        dropped += increment
     else:
         for segment in current_tetro.sprites():
             segment.rect.centery += segment_size
         starty += segment_size
+
+
+"""
+This function instantly drops the falling tetromino. The player is given no grace period.
+"""
+
+
+def hard_drop():
+    global dropped
+    while not move_blocked(0, segment_size):
+        shift_down()
+        dropped = grace_period
 
 
 """
@@ -215,7 +237,7 @@ See README file for a detailed explanation of the rotation functions.
 def cw_rotation():
     global current_letter, rotation_state, startx, starty
     blocked = False
-    if current_letter != O_PIECE and moving < delay:
+    if current_letter != O_PIECE and dropped < grace_period:
         rotated_letter = [[current_letter[j][i] for j in range(len(current_letter))]
                           for i in range(len(current_letter[0]))]
         for list in rotated_letter:
@@ -251,7 +273,6 @@ def cw_rotation():
                                 blocked = False
                                 break
 
-
         if not blocked:
             current_letter = rotated_letter
             if rotation_state < 3:
@@ -265,8 +286,8 @@ def cw_rotation():
 def ccw_rotation():
     global current_letter, rotation_state, startx, starty
     blocked = False
-    if current_letter != O_PIECE and moving < delay:
-        rotated_letter = [[current_letter[j][i] for j in range (len(current_letter[0]))]
+    if current_letter != O_PIECE and dropped < grace_period:
+        rotated_letter = [[current_letter[j][i] for j in range(len(current_letter[0]))]
                           for i in range(len(current_letter))]
         rotated_letter.reverse()
         gen_tetro(rotated_letter, current_surface)
@@ -308,6 +329,7 @@ def ccw_rotation():
                 rotation_state = 3
         else:
             gen_tetro(current_letter, current_surface)
+
 
 """
 Most of the variables are declared in this section. Letter matrices are declared along with surfaces for the sake of
@@ -364,7 +386,7 @@ surface and current surface). startx and starty keep track of the top left corne
 the location of each current tetromino for when they are regenerated after each successful rotation (see rotation 
 functions). These need to be stored as global variables rather than attributes because each tetro is tracked as sprite
 group rather than a specific class. The grid matrix keeps track of the location of dropped tetrominos. The grid is two
-rows higher than the size of the play surface because tetros start tow segment sizes of the play surface.
+rows higher than the size of the play surface because tetros start two segment sizes of the play surface.
 """
 segment_size = 36
 rotation_state = 0
@@ -402,13 +424,19 @@ grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
 """
-Moving and delay coordinate falling pieces. If moving is less than delay the pieces is still falling, else the piece has
-dropped and a new piece is called. The delay variable allows the user to have a couple of moments for movement even
-if the piece has been blocked. THe seperate variable moving and blocked allows the piece to be stopped when it hits a
-barrier but still gives the user some loops for adjustments. USEREVENT is a custom event used in a timer event later on.
+Moving and grace_period coordinate falling pieces. If dropped is less than grace_period the pieces is still falling, 
+else the piece has dropped and a new piece is called. The grace_period variable allows the user to have a couple of 
+moments for movement even if the piece has been blocked. THe seperate variable dropped and blocked allows the piece to
+be stopped when it hits a barrier but still gives the user some loops for adjustments. USEREVENT is a custom event used 
+in a timer event later on. The key_delay, previous_shift_time, previous_drop_time, shift_interval, and drop_interval 
+variables are used in the game loop to mimic the pygame.key.set_repeat function (see later documentation).
 """
-
-moving = delay = 5
+dropped = grace_period = 50
+key_delay = 150
+prev_shift_time = 50
+prev_drop_time = 50
+shift_interval = 50
+drop_interval = 40
 USEREVENT = 24
 
 pygame.init()
@@ -426,7 +454,7 @@ play_surface_right, play_surface_bottom = (((screen_width - play_surface_width) 
 right_margin = (screen_width - play_surface_right)
 next_surface_size = next_surface_width, next_surface_height = ((segment_size * 5), (segment_size * 6))
 pygame.display.set_caption("TITLE PLACEHOLDER")
-pygame.time.Clock()
+clock = pygame.time.Clock()
 bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)
 pygame.time.set_timer(USEREVENT, 250)
 
@@ -435,37 +463,88 @@ Sets the first next tetro. This starts the cycle of current and next tetro gener
 """
 gen_next()
 
+
 def start_game():
+    global prev_shift_time, prev_drop_time
+    clock.tick(30)
     running = True
     while running:
         """
-        if moving checks to see if the tetro has landed yet. It it has not, the program checks for user input. Else the
-        a new piece is generated. The else condition also checks if the user has cancelled the game.
+        if dropped checks to see if the tetro has landed yet. It it has not, the program checks for user input. Else the
+        a new piece is generated. The else condition displays the next tetromino and assigns a new tetromino to fall.
+        The fall also checks if the user has cancelled the game.
         """
 
         # TODO: create loop to handle game over function
         # TODO: create ESC event to handle user pauses
-        # TODO: create fast drop user event
-        # TODO: create instant drop user event
 
-        if moving < delay:
+        if dropped < grace_period:
+            """
+            Game controls are subject to change. Currently controls are: key_right shifts tetro to the right,
+            key_left shifts the tetro to the left, d rotates the tetro clockwise, a rotates the tetro counterclock-
+            wise. s accelerates the tetro's descent, space instantly drops the tetro, and escape changes the game
+            state to the pause menu.
+            """
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
-
-                    # TODO: user should be able to hold down right and left keys
-
                     if event.key == pygame.K_RIGHT:
+                        """
+                        The time_clicked_r variable is used to compare the time the right arrow key is pressed to the
+                        duration of the user holding down the key. time_clicked_r as well as the other timing variables
+                        below function as a delay for when the user holds down the direction keys.
+                        """
+                        time_clicked_r = pygame.time.get_ticks()
                         shift_right()
                     elif event.key == pygame.K_LEFT:
+                        time_clicked_l = pygame.time.get_ticks()
                         shift_left()
+                    elif event.key == pygame.K_s:
+                        time_clicked_s = pygame.time.get_ticks()
                     elif event.key == pygame.K_d:
                         cw_rotation()
                     elif event.key == pygame.K_a:
                         ccw_rotation()
+                    elif event.key == pygame.K_SPACE:
+                        hard_drop()
                 elif event.type == USEREVENT:
                     shift_down()
+
+            """
+            Pygame offers a key.set_repeat function but I could not use it because it does not differentiate between
+            different keys. Therefore, I need to mimic the set_repeat function in the following code. 
+            Pygame's get_pressed() function returns a list containing the current keys being depressed. The code below, 
+            checks if the right, left, or s keys are being depressed. The if loops create a delay and interval effect
+            for the keys by checking when the button has initially been depressed and by checking when the tetro has
+            previously moved.
+            """
+            pressed_keys = pygame.key.get_pressed()
+            if pressed_keys[pygame.K_RIGHT]:
+                """
+                time_clicked_r is the time the right button had started being depressed and then checks the current time
+                and then checks if it has exceeded the key_delay variable. The and expression evaluates how much time
+                has passed from the previous shift. If shift_interval is exceeded, the tetro is moved and the previous
+                shift time is reassigned.
+                """
+                if pygame.time.get_ticks() - time_clicked_r >= key_delay\
+                        and pygame.time.get_ticks() - prev_shift_time >= shift_interval:
+                    shift_right()
+                    prev_shift_time = pygame.time.get_ticks()
+            if pressed_keys[pygame.K_LEFT]:
+                if pygame.time.get_ticks() - time_clicked_l >= key_delay\
+                        and pygame.time.get_ticks() - prev_shift_time >= shift_interval:
+                    shift_left()
+                    prev_shift_time = pygame.time.get_ticks()
+            if pressed_keys[pygame.K_s]:
+                if pygame.time.get_ticks() - time_clicked_s >= key_delay - 50\
+                        and pygame.time.get_ticks() - prev_drop_time >= shift_interval:
+                    """
+                    Shift down is passed a one millisecond argument to extend the grace period.
+                    """
+                    shift_down(1)
+                    prev_drop_time = pygame.time.get_ticks()
+
             """
             All the tetro pieces are displayed, as well as the surfaces. The pieces are first displayed on their 
             respective surfaces, then the respective surfaces are displayed.
@@ -477,7 +556,7 @@ def start_game():
             dropped_segments.draw(play_surface)
             next_tetro.draw(next_tetro_surface)
             pygame.draw.rect(screen, (0, 0, 0), [((screen_width - play_surface_width) // 2) - 6,
-                                       ((screen_height - play_surface_height) // 2) - 6,
+                                                 ((screen_height - play_surface_height) // 2) - 6,
                                                  play_surface_width + 11, play_surface_height + 11])
             screen.blit(play_surface, (((screen_width - play_surface_width) // 2),
                                        ((screen_height - play_surface_height) // 2)))
@@ -493,5 +572,5 @@ def start_game():
             update_surface()
     pygame.quit()
 
-start_game()
 
+start_game()
