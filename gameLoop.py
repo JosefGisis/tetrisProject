@@ -7,6 +7,23 @@ their appearance and give them colors.
 """
 import sys, pygame, random
 
+
+"""
+new game
+"""
+
+def new_game():
+    global starty, startx, dropped, rotation_state, game_over
+    current_tetro.empty()
+    dropped = grace_period
+    rotation_state = 0
+    starty = (-2 * segment_size)
+    startx = (3 * segment_size)
+    for row in dropped_segments:
+        row.empty()
+    gen_next()
+    game_over = False
+
 """
 This is the segment class for all tetrominos. Throughout the program, segment refers to all of the four parts each     
 tetromino is made up of. The Segment class takes a location and surface argument to generate each piece.
@@ -53,6 +70,7 @@ next_tetro = pygame.sprite.Group()
 
 def gen_next():
     global next_letter, next_surface
+    next_tetro.empty()
     """
     Next_letter is picked from the list of letters and the program retrieves the correct segment surface by getting the
     letter's index and matching it to a parallel tuple.
@@ -96,8 +114,12 @@ documentation).
 
 
 def check_pos():
+    global game_over
     for segment in current_tetro.sprites():
-        dropped_segments[segment.rect.top // segment_size].add(segment)
+        if segment.rect.top < 0:
+            game_over = True
+        else:
+            dropped_segments[segment.rect.top // segment_size].add(segment)
 
 
 def get_lines():
@@ -134,6 +156,9 @@ def filled_lines_handler():
         for row in dropped_segments:
             if dropped_segments.index(row) in (filled_lines):
                 row.empty()
+
+        # TODO: when the line get higher the list gets out range and causes problems.
+
         for i in range((filled_lines[0]) -1, -1, -1):
             for segment in dropped_segments[i].sprites():
                 segment.rect.top += segment_size * len(filled_lines)
@@ -147,7 +172,6 @@ def new_tetro():
     startx, starty = (3 * segment_size), (-2 * segment_size)
     current_letter, current_surface = next_letter, next_surface
     gen_tetro(current_letter, current_surface)
-    next_tetro.empty()
     gen_next()
     dropped = 0
     rotation_state = 0
@@ -452,6 +476,7 @@ drop_interval = 40
 USEREVENT = 24
 
 pygame.init()
+game_over = False
 display_size = screen_width, screen_height = (1000, 800)
 screen = pygame.display.set_mode(display_size)
 
@@ -479,114 +504,118 @@ gen_next()
 
 
 def start_game():
-    global prev_shift_time, prev_drop_time, play_surface
+    global prev_shift_time, prev_drop_time, play_surface, game_over
     clock.tick(30)
     running = True
     while running:
-        """
-        if dropped checks to see if the tetro has landed yet. It it has not, the program checks for user input. Else the
-        a new piece is generated. The else condition displays the next tetromino and assigns a new tetromino to fall.
-        The fall also checks if the user has cancelled the game.
-        """
-
-        # TODO: create loop to handle game over function
-        # TODO: create ESC event to handle user pauses
-
-        if dropped < grace_period:
+        if not game_over:
             """
-            Game controls are subject to change. Currently controls are: key_right shifts tetro to the right,
-            key_left shifts the tetro to the left, d rotates the tetro clockwise, a rotates the tetro counterclock-
-            wise. s accelerates the tetro's descent, space instantly drops the tetro, and escape changes the game
-            state to the pause menu.
+            if dropped checks to see if the tetro has landed yet. It it has not, the program checks for user input. Else the
+            a new piece is generated. The else condition displays the next tetromino and assigns a new tetromino to fall.
+            The fall also checks if the user has cancelled the game.
             """
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RIGHT:
-                        """
-                        The time_clicked_r variable is used to compare the time the right arrow key is pressed to the
-                        duration of the user holding down the key. time_clicked_r as well as the other timing variables
-                        below function as a delay for when the user holds down the direction keys.
-                        """
-                        time_clicked_r = pygame.time.get_ticks()
+
+            # TODO: create loop to handle game over function
+            # TODO: create ESC event to handle user pauses
+
+            if dropped < grace_period:
+                """
+                Game controls are subject to change. Currently controls are: key_right shifts tetro to the right,
+                key_left shifts the tetro to the left, d rotates the tetro clockwise, a rotates the tetro counterclock-
+                wise. s accelerates the tetro's descent, space instantly drops the tetro, and escape changes the game
+                state to the pause menu.
+                """
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                        game_over = True
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_RIGHT:
+                            """
+                            The time_clicked_r variable is used to compare the time the right arrow key is pressed to the
+                            duration of the user holding down the key. time_clicked_r as well as the other timing variables
+                            below function as a delay for when the user holds down the direction keys.
+                            """
+                            time_clicked_r = pygame.time.get_ticks()
+                            shift_right()
+                        elif event.key == pygame.K_LEFT:
+                            time_clicked_l = pygame.time.get_ticks()
+                            shift_left()
+                        elif event.key == pygame.K_s:
+                            time_clicked_s = pygame.time.get_ticks()
+                        elif event.key == pygame.K_d:
+                            cw_rotation()
+                        elif event.key == pygame.K_a:
+                            ccw_rotation()
+                        elif event.key == pygame.K_SPACE:
+                            hard_drop()
+                    elif event.type == USEREVENT:
+                        shift_down()
+
+                """
+                Pygame offers a key.set_repeat function but I could not use it because it does not differentiate between
+                different keys. Therefore, I need to mimic the set_repeat function in the following code. 
+                Pygame's get_pressed() function returns a list containing the current keys being depressed. The code below, 
+                checks if the right, left, or s keys are being depressed. The if loops create a delay and interval effect
+                for the keys by checking when the button has initially been depressed and by checking when the tetro has
+                previously moved.
+                """
+                pressed_keys = pygame.key.get_pressed()
+                if pressed_keys[pygame.K_RIGHT]:
+                    """
+                    time_clicked_r is the time the right button had started being depressed and then checks the current time
+                    and then checks if it has exceeded the key_delay variable. The and expression evaluates how much time
+                    has passed from the previous shift. If shift_interval is exceeded, the tetro is moved and the previous
+                    shift time is reassigned.
+                    """
+                    if pygame.time.get_ticks() - time_clicked_r >= key_delay\
+                            and pygame.time.get_ticks() - prev_shift_time >= shift_interval:
                         shift_right()
-                    elif event.key == pygame.K_LEFT:
-                        time_clicked_l = pygame.time.get_ticks()
+                        prev_shift_time = pygame.time.get_ticks()
+                if pressed_keys[pygame.K_LEFT]:
+                    if pygame.time.get_ticks() - time_clicked_l >= key_delay\
+                            and pygame.time.get_ticks() - prev_shift_time >= shift_interval:
                         shift_left()
-                    elif event.key == pygame.K_s:
-                        time_clicked_s = pygame.time.get_ticks()
-                    elif event.key == pygame.K_d:
-                        cw_rotation()
-                    elif event.key == pygame.K_a:
-                        ccw_rotation()
-                    elif event.key == pygame.K_SPACE:
-                        hard_drop()
-                elif event.type == USEREVENT:
-                    shift_down()
+                        prev_shift_time = pygame.time.get_ticks()
+                if pressed_keys[pygame.K_s]:
+                    if pygame.time.get_ticks() - time_clicked_s >= key_delay - 75\
+                            and pygame.time.get_ticks() - prev_drop_time >= drop_interval:
+                        """
+                        Shift down is passed a one millisecond argument to extend the grace period.
+                        """
+                        shift_down(3)
+                        prev_drop_time = pygame.time.get_ticks()
 
-            """
-            Pygame offers a key.set_repeat function but I could not use it because it does not differentiate between
-            different keys. Therefore, I need to mimic the set_repeat function in the following code. 
-            Pygame's get_pressed() function returns a list containing the current keys being depressed. The code below, 
-            checks if the right, left, or s keys are being depressed. The if loops create a delay and interval effect
-            for the keys by checking when the button has initially been depressed and by checking when the tetro has
-            previously moved.
-            """
-            pressed_keys = pygame.key.get_pressed()
-            if pressed_keys[pygame.K_RIGHT]:
                 """
-                time_clicked_r is the time the right button had started being depressed and then checks the current time
-                and then checks if it has exceeded the key_delay variable. The and expression evaluates how much time
-                has passed from the previous shift. If shift_interval is exceeded, the tetro is moved and the previous
-                shift time is reassigned.
+                All the tetro pieces are displayed, as well as the surfaces. The pieces are first displayed on their 
+                respective surfaces, then the respective surfaces are displayed.
                 """
-                if pygame.time.get_ticks() - time_clicked_r >= key_delay\
-                        and pygame.time.get_ticks() - prev_shift_time >= shift_interval:
-                    shift_right()
-                    prev_shift_time = pygame.time.get_ticks()
-            if pressed_keys[pygame.K_LEFT]:
-                if pygame.time.get_ticks() - time_clicked_l >= key_delay\
-                        and pygame.time.get_ticks() - prev_shift_time >= shift_interval:
-                    shift_left()
-                    prev_shift_time = pygame.time.get_ticks()
-            if pressed_keys[pygame.K_s]:
-                if pygame.time.get_ticks() - time_clicked_s >= key_delay - 75\
-                        and pygame.time.get_ticks() - prev_drop_time >= drop_interval:
-                    """
-                    Shift down is passed a one millisecond argument to extend the grace period.
-                    """
-                    shift_down(3)
-                    prev_drop_time = pygame.time.get_ticks()
+                screen.blit(bg_img, (0, 0))
+                play_surface = pygame.Surface(play_surface_size)
+                next_tetro_surface = pygame.Surface(next_surface_size)
+                current_tetro.draw(play_surface)
+                for dropped_row in dropped_segments:
+                    dropped_row.draw(play_surface)
+                next_tetro.draw(next_tetro_surface)
+                pygame.draw.rect(screen, (0, 0, 0), [((screen_width - play_surface_width) // 2) - 6,
+                                                     ((screen_height - play_surface_height) // 2) - 6,
+                                                     play_surface_width + 11, play_surface_height + 11])
+                screen.blit(play_surface, (((screen_width - play_surface_width) // 2),
+                                           ((screen_height - play_surface_height) // 2)))
+                screen.blit(next_tetro_surface, ((((right_margin - next_surface_width) // 2) + play_surface_right),
+                                                 ((screen_height - play_surface_height) // 2)))
 
-            """
-            All the tetro pieces are displayed, as well as the surfaces. The pieces are first displayed on their 
-            respective surfaces, then the respective surfaces are displayed.
-            """
-            screen.blit(bg_img, (0, 0))
-            play_surface = pygame.Surface(play_surface_size)
-            next_tetro_surface = pygame.Surface(next_surface_size)
-            current_tetro.draw(play_surface)
-            for dropped_row in dropped_segments:
-                dropped_row.draw(play_surface)
-            next_tetro.draw(next_tetro_surface)
-            pygame.draw.rect(screen, (0, 0, 0), [((screen_width - play_surface_width) // 2) - 6,
-                                                 ((screen_height - play_surface_height) // 2) - 6,
-                                                 play_surface_width + 11, play_surface_height + 11])
-            screen.blit(play_surface, (((screen_width - play_surface_width) // 2),
-                                       ((screen_height - play_surface_height) // 2)))
-            screen.blit(next_tetro_surface, ((((right_margin - next_surface_width) // 2) + play_surface_right),
-                                             ((screen_height - play_surface_height) // 2)))
-
-            pygame.display.flip()
+                pygame.display.flip()
+            else:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                check_pos()
+                line_animation()
+                filled_lines_handler()
+                new_tetro()
         else:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-            check_pos()
-            line_animation()
-            filled_lines_handler()
-            new_tetro()
+            new_game()
     pygame.quit()
 
 
