@@ -89,6 +89,7 @@ list and iterates through each sprite groupo and increments i by one for every s
 (that is it has be incremented 10 times) the line is added to the filled_lines list. Once the function has iterated
 through all 20 rows, the function returns filled_lines. Note: line, if dropped_segments[row]: tests if there is anything
 in that row and skips otherwise.
+line_animations displays a filled line animations. The function and animation will likely be changed in the future.
 filled_line_handler empties all the filled rows and moves down all the above segments (see function for more
 documentation).
 """
@@ -112,6 +113,21 @@ def get_lines():
     return filled_lines
 
 
+def line_animation():
+    filled_lines = get_lines()
+    if filled_lines:
+        for h in range(3):
+            for j in range(45):
+                for i in filled_lines:
+                    screen.blit(completed_line_image1, (((screen_width - play_surface_width) // 2),
+                                                     (i * segment_size + ((screen_height - play_surface_height) // 2))))
+                pygame.display.flip()
+            for j in range(45):
+                for i in filled_lines:
+                    screen.blit(completed_line_image2, (((screen_width - play_surface_width) // 2),
+                                                     (i * segment_size + ((screen_height - play_surface_height) // 2))))
+                pygame.display.flip()
+
 def filled_lines_handler():
     filled_lines = get_lines()
     if filled_lines:
@@ -123,7 +139,6 @@ def filled_lines_handler():
                 segment.rect.top += segment_size * len(filled_lines)
                 dropped_segments[i + len(filled_lines)].add(segment)
             dropped_segments[i].empty()
-    filled_lines.clear()
 
 
 def new_tetro():
@@ -360,22 +375,18 @@ I_PIECE = [[0, 0, 0, 0],
            [1, 1, 1, 1],
            [0, 0, 0, 0],
            [0, 0, 0, 0]]
-i_surface = pygame.image.load("teal_segment.jpg")
 
 J_PIECE = [[1, 0, 0],
            [1, 1, 1],
            [0, 0, 0]]
-j_surface = pygame.image.load("blue_segment.jpg")
 
 L_PIECE = [[0, 0, 1],
            [1, 1, 1],
            [0, 0, 0]]
-l_surface = pygame.image.load("orange_segment.jpg")
 
 T_PIECE = [[0, 1, 0],
            [1, 1, 1],
            [0, 0, 0]]
-t_surface = pygame.image.load("purple_segment.jpg")
 
 """
 O does not rotate. The matrix is larger than the shape to offset the tetro to start at the correct position.
@@ -383,20 +394,20 @@ O does not rotate. The matrix is larger than the shape to offset the tetro to st
 O_PIECE = [[0, 1, 1],
            [0, 1, 1],
            [0, 0, 0]]
-o_surface = pygame.image.load("magenta_segment.jpg")
 
 S_PIECE = [[0, 1, 1],
            [1, 1, 0],
            [0, 0, 0]]
-s_surface = pygame.image.load("green_segment.jpg")
 
 Z_PIECE = [[1, 1, 0],
            [0, 1, 1],
            [0, 0, 0]]
-z_surface = pygame.image.load("red_segment.jpg")
 
 tetro_list = (I_PIECE, J_PIECE, L_PIECE, T_PIECE, O_PIECE, S_PIECE, Z_PIECE)
-tetro_surfaces = (i_surface, j_surface, l_surface, t_surface, o_surface, s_surface, z_surface)
+tetro_surfaces = (pygame.image.load("teal_segment.jpg"), pygame.image.load("blue_segment.jpg"),
+                  pygame.image.load("orange_segment.jpg"), pygame.image.load("purple_segment.jpg"),
+                  pygame.image.load("magenta_segment.jpg"), pygame.image.load("green_segment.jpg"),
+                  pygame.image.load("red_segment.jpg"))
 
 """
 Segment size is the size of each tetromino segment and is essential to most other aspect of the program. The start 
@@ -437,7 +448,7 @@ key_delay = 150
 prev_shift_time = 50
 prev_drop_time = 50
 shift_interval = 60
-drop_interval = 30
+drop_interval = 40
 USEREVENT = 24
 
 pygame.init()
@@ -541,7 +552,7 @@ def start_game():
                     prev_shift_time = pygame.time.get_ticks()
             if pressed_keys[pygame.K_s]:
                 if pygame.time.get_ticks() - time_clicked_s >= key_delay - 75\
-                        and pygame.time.get_ticks() - prev_drop_time >= shift_interval:
+                        and pygame.time.get_ticks() - prev_drop_time >= drop_interval:
                     """
                     Shift down is passed a one millisecond argument to extend the grace period.
                     """
@@ -573,19 +584,7 @@ def start_game():
                 if event.type == pygame.QUIT:
                     running = False
             check_pos()
-            filled_lines = get_lines()
-            if filled_lines:
-                for h in range(3):
-                    for j in range(45):
-                        for i in filled_lines:
-                            screen.blit(completed_line_image1, (((screen_width - play_surface_width) // 2),
-                                                                (i * segment_size + ((screen_height - play_surface_height) // 2))))
-                        pygame.display.flip()
-                    for j in range(45):
-                        for i in filled_lines:
-                            screen.blit(completed_line_image2, (((screen_width - play_surface_width) // 2),
-                                                                (i * segment_size + ((screen_height - play_surface_height) // 2))))
-                        pygame.display.flip()
+            line_animation()
             filled_lines_handler()
             new_tetro()
     pygame.quit()
