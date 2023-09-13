@@ -7,22 +7,23 @@ their appearance and give them colors.
 """
 import sys, pygame, random
 
-
 """
 new game
 """
+
 
 def new_game():
     global starty, startx, dropped, rotation_state, game_over
     current_tetro.empty()
     dropped = grace_period
     rotation_state = 0
-    starty = (-2 * segment_size)
-    startx = (3 * segment_size)
+    starty = (-2 * SEGMENT_SIZE)
+    startx = (3 * SEGMENT_SIZE)
     for row in dropped_segments:
         row.empty()
     gen_next()
     game_over = False
+
 
 """
 This is the segment class for all tetrominos. Throughout the program, segment refers to all of the four parts each     
@@ -54,7 +55,7 @@ def gen_tetro(letter, surface):
     for row in range(len(letter)):
         for column in range(len(letter)):
             if letter[row][column] == 1:
-                location = [(startx + (segment_size * column)), (starty + (segment_size * row))]
+                location = [(startx + (SEGMENT_SIZE * column)), (starty + (SEGMENT_SIZE * row))]
                 new_segment = Segment(location, surface)
                 current_tetro.add(new_segment)
 
@@ -75,17 +76,17 @@ def gen_next():
     Next_letter is picked from the list of letters and the program retrieves the correct segment surface by getting the
     letter's index and matching it to a parallel tuple.
     """
-    next_letter = random.choice(tetro_list)
-    next_surface = tetro_surfaces[tetro_list.index(next_letter)]
+    next_letter = random.choice(TETRO_LIST)
+    next_surface = TETRO_SURFACES[TETRO_LIST.index(next_letter)]
     """
     The following code ensures the next tetromino is displayed in the center of the next piece surface. O requires
     custom logic because O if offset within its matrix, so that it displayed at the correct starting point on the play
     play surface. However this cause to not be properly display on the next piece surface.
     """
     if next_letter != O_PIECE:
-        start = ((next_surface_width - (segment_size * len(next_letter))) // 2)
+        start = ((next_surface_width - (SEGMENT_SIZE * len(next_letter))) // 2)
     else:
-        start = (((next_surface_width - segment_size * 2) // 2) - segment_size)
+        start = (((next_surface_width - SEGMENT_SIZE * 2) // 2) - SEGMENT_SIZE)
     for row in range(len(next_letter)):
         for column in range(len(next_letter)):
             if next_letter[row][column] == 1:
@@ -93,7 +94,7 @@ def gen_next():
                 The horizontal location is set to be in the center, but the vertical location is pushed down to allow
                 for room for the surface banner.
                 """
-                location = [(start + (segment_size * column)), (3 * segment_size + (segment_size * row))]
+                location = [(start + (SEGMENT_SIZE * column)), (3 * SEGMENT_SIZE + (SEGMENT_SIZE * row))]
                 new_segment = Segment(location, next_surface)
                 next_tetro.add(new_segment)
 
@@ -119,7 +120,7 @@ def check_pos():
         if segment.rect.top < 0:
             game_over = True
         else:
-            dropped_segments[segment.rect.top // segment_size].add(segment)
+            dropped_segments[segment.rect.top // SEGMENT_SIZE].add(segment)
 
 
 def get_lines():
@@ -141,35 +142,44 @@ def line_animation():
         for h in range(3):
             for j in range(45):
                 for i in filled_lines:
-                    screen.blit(completed_line_image1, (((screen_width - play_surface_width) // 2),
-                                                     (i * segment_size + ((screen_height - play_surface_height) // 2))))
+                    screen.blit(completed_line_image1,
+                                (((screen_width - play_surface_width) // 2),
+                                 (i * SEGMENT_SIZE + ((screen_height - play_surface_height) // 2))))
                 pygame.display.flip()
             for j in range(45):
                 for i in filled_lines:
-                    screen.blit(completed_line_image2, (((screen_width - play_surface_width) // 2),
-                                                     (i * segment_size + ((screen_height - play_surface_height) // 2))))
+                    screen.blit(completed_line_image2,
+                                (((screen_width - play_surface_width) // 2),
+                                 (i * SEGMENT_SIZE + ((screen_height - play_surface_height) // 2))))
                 pygame.display.flip()
 
 def filled_lines_handler():
     filled_lines = get_lines()
     if filled_lines:
         for row in dropped_segments:
-            if dropped_segments.index(row) in (filled_lines):
+            if dropped_segments.index(row) in filled_lines:
                 row.empty()
 
         # TODO: when the line get higher the list gets out range and causes problems.
+        # TODO: another issue may be that if two line get destroyed that are not concurrent bugs may occur
 
         for i in range((filled_lines[0]) -1, -1, -1):
             for segment in dropped_segments[i].sprites():
-                segment.rect.top += segment_size * len(filled_lines)
-                dropped_segments[i + len(filled_lines)].add(segment)
+                try:
+                    dropped_segments[i + len(filled_lines)].add(segment)
+                    segment.rect.top += SEGMENT_SIZE * len(filled_lines)
+                except:
+                    print()
+                    print("error: 001")
+                    print("fatal range error")
+                    return None
             dropped_segments[i].empty()
 
 
 def new_tetro():
     global starty, startx, current_tetro, dropped, next_letter, next_surface, current_letter, current_surface, \
         rotation_state
-    startx, starty = (3 * segment_size), (-2 * segment_size)
+    startx, starty = (3 * SEGMENT_SIZE), (-2 * SEGMENT_SIZE)
     current_letter, current_surface = next_letter, next_surface
     gen_tetro(current_letter, current_surface)
     gen_next()
@@ -214,19 +224,19 @@ dropped variable is to give the player a grace period to adjust the tetro after 
 def shift_right():
     global startx
     if dropped < grace_period:
-        if not move_blocked(segment_size, 0):
+        if not move_blocked(SEGMENT_SIZE, 0):
             for segment in current_tetro.sprites():
-                segment.rect.centerx += segment_size
-            startx += segment_size
+                segment.rect.centerx += SEGMENT_SIZE
+            startx += SEGMENT_SIZE
 
 
 def shift_left():
     global startx
     if dropped < grace_period:
-        if not move_blocked(-segment_size, 0):
+        if not move_blocked(-SEGMENT_SIZE, 0):
             for segment in current_tetro.sprites():
-                segment.rect.centerx -= segment_size
-            startx -= segment_size
+                segment.rect.centerx -= SEGMENT_SIZE
+            startx -= SEGMENT_SIZE
 
 
 """
@@ -240,12 +250,12 @@ correct this detail.
 
 def shift_down(increment=10):
     global dropped, starty
-    if move_blocked(0, segment_size):
+    if move_blocked(0, SEGMENT_SIZE):
         dropped += increment
     else:
         for segment in current_tetro.sprites():
-            segment.rect.centery += segment_size
-        starty += segment_size
+            segment.rect.centery += SEGMENT_SIZE
+        starty += SEGMENT_SIZE
 
 
 """
@@ -255,7 +265,7 @@ This function instantly drops the falling tetromino. The player is given no grac
 
 def hard_drop():
     global dropped
-    while not move_blocked(0, segment_size):
+    while not move_blocked(0, SEGMENT_SIZE):
         shift_down()
         dropped = grace_period
 
@@ -309,10 +319,10 @@ def cw_rotation():
                     if i == rotation_state:
                         for j in range(len(cw_check[i])):
                             for segment in current_tetro:
-                                segment.rect.left += (cw_check[i][j][0] * segment_size)
-                                segment.rect.top -= (cw_check[i][j][1] * segment_size)
-                            startx += (cw_check[i][j][0] * segment_size)
-                            starty -= (cw_check[i][j][1] * segment_size)
+                                segment.rect.left += (cw_check[i][j][0] * SEGMENT_SIZE)
+                                segment.rect.top -= (cw_check[i][j][1] * SEGMENT_SIZE)
+                            startx += (cw_check[i][j][0] * SEGMENT_SIZE)
+                            starty -= (cw_check[i][j][1] * SEGMENT_SIZE)
                             if move_blocked(0, 0):
                                 blocked = True
                             else:
@@ -323,10 +333,10 @@ def cw_rotation():
                     if i == rotation_state:
                         for j in range(len(cw_ipiece_check[i])):
                             for segment in current_tetro:
-                                segment.rect.left += (cw_ipiece_check[i][j][0] * segment_size)
-                                segment.rect.top -= (cw_ipiece_check[i][j][1] * segment_size)
-                            startx += (cw_ipiece_check[i][j][0] * segment_size)
-                            starty -= (cw_ipiece_check[i][j][1] * segment_size)
+                                segment.rect.left += (cw_ipiece_check[i][j][0] * SEGMENT_SIZE)
+                                segment.rect.top -= (cw_ipiece_check[i][j][1] * SEGMENT_SIZE)
+                            startx += (cw_ipiece_check[i][j][0] * SEGMENT_SIZE)
+                            starty -= (cw_ipiece_check[i][j][1] * SEGMENT_SIZE)
                             if move_blocked(0, 0):
                                 blocked = True
                             else:
@@ -357,10 +367,10 @@ def ccw_rotation():
                     if i == rotation_state:
                         for j in range(len(cw_check[i])):
                             for segment in current_tetro:
-                                segment.rect.left += (ccw_check[i][j][0] * segment_size)
-                                segment.rect.top -= (ccw_check[i][j][1] * segment_size)
-                            startx += (ccw_check[i][j][0] * segment_size)
-                            starty -= (ccw_check[i][j][1] * segment_size)
+                                segment.rect.left += (ccw_check[i][j][0] * SEGMENT_SIZE)
+                                segment.rect.top -= (ccw_check[i][j][1] * SEGMENT_SIZE)
+                            startx += (ccw_check[i][j][0] * SEGMENT_SIZE)
+                            starty -= (ccw_check[i][j][1] * SEGMENT_SIZE)
                             if move_blocked(0, 0):
                                 blocked = True
                             else:
@@ -371,10 +381,10 @@ def ccw_rotation():
                     if i == rotation_state:
                         for j in range(len(ccw_ipiece_check[i])):
                             for segment in current_tetro:
-                                segment.rect.left += (ccw_ipiece_check[i][j][0] * segment_size)
-                                segment.rect.top -= (ccw_ipiece_check[i][j][1] * segment_size)
-                            startx += (ccw_ipiece_check[i][j][0] * segment_size)
-                            starty -= (ccw_ipiece_check[i][j][1] * segment_size)
+                                segment.rect.left += (ccw_ipiece_check[i][j][0] * SEGMENT_SIZE)
+                                segment.rect.top -= (ccw_ipiece_check[i][j][1] * SEGMENT_SIZE)
+                            startx += (ccw_ipiece_check[i][j][0] * SEGMENT_SIZE)
+                            starty -= (ccw_ipiece_check[i][j][1] * SEGMENT_SIZE)
                             if move_blocked(0, 0):
                                 blocked = True
                             else:
@@ -392,22 +402,23 @@ def ccw_rotation():
 
 
 """
-Most of the variables are declared in this section. Letter matrices are declared along with surfaces for the sake of
-clarity. Each letter (tetromino shape) has an image associated with it.
+This segment contains constants used throughout the game loop. 
+Each letter (tetromino shape) has an image associated with it called the _____ surface. The tetro tuple and surface
+tuple are parallel arrays and each tetromino has a surface associated with its shape. Segment size is the size of each
+tetromino segment and is essential to most other aspect of the program. The start location of each tetro, play surface
+size, movement size, etc. are determined by SEGMENT_SIZE. USEREVENT is a custom event used in a timer event within the
+game loop.
 """
 I_PIECE = [[0, 0, 0, 0],
            [1, 1, 1, 1],
            [0, 0, 0, 0],
            [0, 0, 0, 0]]
-
 J_PIECE = [[1, 0, 0],
            [1, 1, 1],
            [0, 0, 0]]
-
 L_PIECE = [[0, 0, 1],
            [1, 1, 1],
            [0, 0, 0]]
-
 T_PIECE = [[0, 1, 0],
            [1, 1, 1],
            [0, 0, 0]]
@@ -418,41 +429,55 @@ O does not rotate. The matrix is larger than the shape to offset the tetro to st
 O_PIECE = [[0, 1, 1],
            [0, 1, 1],
            [0, 0, 0]]
-
 S_PIECE = [[0, 1, 1],
            [1, 1, 0],
            [0, 0, 0]]
-
 Z_PIECE = [[1, 1, 0],
            [0, 1, 1],
            [0, 0, 0]]
-
-tetro_list = (I_PIECE, J_PIECE, L_PIECE, T_PIECE, O_PIECE, S_PIECE, Z_PIECE)
-tetro_surfaces = (pygame.image.load("teal_segment.jpg"), pygame.image.load("blue_segment.jpg"),
+TETRO_LIST = (I_PIECE, J_PIECE, L_PIECE, T_PIECE, O_PIECE, S_PIECE, Z_PIECE)
+TETRO_SURFACES = (pygame.image.load("teal_segment.jpg"), pygame.image.load("blue_segment.jpg"),
                   pygame.image.load("orange_segment.jpg"), pygame.image.load("purple_segment.jpg"),
                   pygame.image.load("magenta_segment.jpg"), pygame.image.load("green_segment.jpg"),
                   pygame.image.load("red_segment.jpg"))
 
+SEGMENT_SIZE = 36
+USEREVENT = 24
+
 """
-Segment size is the size of each tetromino segment and is essential to most other aspect of the program. The start 
-location of each tetro, play surface size, movement size, etc. are determined by segment_size. Rotation state is the
-rotation degree of each tetromino (0, 90, 180, and 270). The rotation state of each piece affects its rotation
+The KEY_DELAY and SHIFT_INTERVAL constants and the previous_shift_time and previous_drop_time variables are used in the
+game loop to mimic the pygame.key.set_repeat function (see later documentation). Literal are in milliseconds. 
+"""
+KEY_DELAY = 150
+SHIFT_INTERVAL = 60
+prev_shift_time = 50
+prev_drop_time = 50
+
+"""
+This segment contains variable that control the gameloop. Some are present because they need to initialized, and some
+others are only present for clarity (meaning they are first assigned a literal within the game loop). Rotation state is 
+the rotation degree of each tetromino (0, 90, 180, and 270). The rotation state of each piece affects its rotation
 behaviour. Current letter and next letter belong to the current tetro and next tetro respectively (same for the next
 surface and current surface). startx and starty keep track of the top left corner of each tetromino and keep track of
 the location of each current tetromino for when they are regenerated after each successful rotation (see rotation 
 functions). These need to be stored as global variables rather than attributes because each tetro is tracked as sprite
 group rather than a specific class. dropped_segments is a list of sprite groups that tracks all of the fallen 
 tetrominos. Fallen pieces are kept in seperate groups depending on their row in order to track which lines have been
-filled.
+filled. game_over starts a new game when necessary. 
+Dropped and grace_period coordinate falling pieces. If dropped is less than grace_period the pieces is still falling, 
+else the piece has dropped and a new piece is called. The grace_period variable allows the user to have a couple of 
+moments for movement even if the piece has been blocked. The seperate variable dropped and blocked allows the piece to
+be stopped when it hits a barrier but still gives the user some loops for adjustments.
 """
-segment_size = 36
+dropped = grace_period = 30
+game_over = False
 rotation_state = 0
 current_letter = 0
 next_letter = 0
 next_surface = 0
 current_surface = 0
-starty = (-2 * segment_size)
-startx = (3 * segment_size)
+starty = (-2 * SEGMENT_SIZE)
+startx = (3 * SEGMENT_SIZE)
 
 dropped_segments = []
 for i in range(20):
@@ -460,42 +485,42 @@ for i in range(20):
     dropped_segments.append(dropped_row)
 
 """
-Moving and grace_period coordinate falling pieces. If dropped is less than grace_period the pieces is still falling, 
-else the piece has dropped and a new piece is called. The grace_period variable allows the user to have a couple of 
-moments for movement even if the piece has been blocked. THe seperate variable dropped and blocked allows the piece to
-be stopped when it hits a barrier but still gives the user some loops for adjustments. USEREVENT is a custom event used 
-in a timer event later on. The key_delay, previous_shift_time, previous_drop_time, shift_interval, and drop_interval 
-variables are used in the game loop to mimic the pygame.key.set_repeat function (see later documentation).
+This is a list of scoreboard trackers. Level tacks the difficulty, current_score is the players current score, lines
+tracks how lines the player has filled, and high score compares the users current_score with the highest score for their
+device.
 """
-dropped = grace_period = 30
-key_delay = 150
-prev_shift_time = 50
-prev_drop_time = 50
-shift_interval = 60
-drop_interval = 40
-USEREVENT = 24
+level = 0
+current_score = 0
+lines = 0
+high_score = 0
 
+"""
+Initiates all pygame modules. Display size is contained as variables for easier access. clock is an object initialized 
+from Pygame's Clock class. USEREVENT is a custom timer responsible for moving the tetrominos down.
+"""
 pygame.init()
-game_over = False
 display_size = screen_width, screen_height = (1000, 800)
 screen = pygame.display.set_mode(display_size)
+pygame.display.set_caption("TITLE PLACEHOLDER")
+clock = pygame.time.Clock()
+pygame.time.set_timer(USEREVENT, 250)
 
 """
 These are some variables to set the size of the play surface, as well determine the right and bottom boundaries of the
-play surface. The right and bottom borders help determine the right border of the display. The right margin helps 
-determine where other surfaces can be displayed.
+play surface. The right and bottom borders help determine the right margin. Right margin determines where other surface
+can be displayed.
 """
-play_surface_size = (play_surface_width, play_surface_height) = ((segment_size * 10), (segment_size * 20))
+play_surface_size = (play_surface_width, play_surface_height) = ((SEGMENT_SIZE * 10), (SEGMENT_SIZE * 20))
 play_surface_right, play_surface_bottom = (((screen_width - play_surface_width) // 2) + play_surface_width), \
                                           (((screen_height - play_surface_height) // 2) + play_surface_height)
 right_margin = (screen_width - play_surface_right)
-next_surface_size = next_surface_width, next_surface_height = ((segment_size * 5), (segment_size * 6))
-pygame.display.set_caption("TITLE PLACEHOLDER")
-clock = pygame.time.Clock()
+next_surface_size = next_surface_width, next_surface_height = ((SEGMENT_SIZE * 5), (SEGMENT_SIZE * 6))
+score_surface_size = score_surface_width, score_surface_height = ((SEGMENT_SIZE * 6), (SEGMENT_SIZE * 16))
+
 bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)
 completed_line_image1 = pygame.image.load("line_completed1.jpg")
 completed_line_image2 = pygame.image.load("line_completed2.jpg")
-pygame.time.set_timer(USEREVENT, 250)
+
 
 """
 Sets the first next tetro. This starts the cycle of current and next tetro generation.
@@ -504,15 +529,15 @@ gen_next()
 
 
 def start_game():
-    global prev_shift_time, prev_drop_time, play_surface, game_over
+    global prev_shift_time, prev_drop_time, game_over
     clock.tick(30)
     running = True
     while running:
         if not game_over:
             """
-            if dropped checks to see if the tetro has landed yet. It it has not, the program checks for user input. Else the
-            a new piece is generated. The else condition displays the next tetromino and assigns a new tetromino to fall.
-            The fall also checks if the user has cancelled the game.
+            if dropped checks to see if the tetro has landed yet. It it has not, the program checks for user input. Else
+            the a new piece is generated. The else condition displays the next tetromino and assigns a new tetromino to
+            fall. The fall also checks if the user has cancelled the game.
             """
 
             # TODO: create loop to handle game over function
@@ -532,9 +557,9 @@ def start_game():
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_RIGHT:
                             """
-                            The time_clicked_r variable is used to compare the time the right arrow key is pressed to the
-                            duration of the user holding down the key. time_clicked_r as well as the other timing variables
-                            below function as a delay for when the user holds down the direction keys.
+                            The time_clicked_r variable is used to compare the time the right arrow key is pressed to
+                            the duration of the user holding down the key. time_clicked_r as well as the other timing
+                            variables below function as a delay for when the user holds down the direction keys.
                             """
                             time_clicked_r = pygame.time.get_ticks()
                             shift_right()
@@ -555,31 +580,31 @@ def start_game():
                 """
                 Pygame offers a key.set_repeat function but I could not use it because it does not differentiate between
                 different keys. Therefore, I need to mimic the set_repeat function in the following code. 
-                Pygame's get_pressed() function returns a list containing the current keys being depressed. The code below, 
-                checks if the right, left, or s keys are being depressed. The if loops create a delay and interval effect
-                for the keys by checking when the button has initially been depressed and by checking when the tetro has
-                previously moved.
+                Pygame's get_pressed() function returns a list containing the current keys being depressed. The code 
+                below, checks if the right, left, or s keys are being depressed. The if loops create a delay and
+                interval effect for the keys by checking when the button has initially been depressed and by checking
+                when the tetro has previously moved.
                 """
                 pressed_keys = pygame.key.get_pressed()
                 if pressed_keys[pygame.K_RIGHT]:
                     """
-                    time_clicked_r is the time the right button had started being depressed and then checks the current time
-                    and then checks if it has exceeded the key_delay variable. The and expression evaluates how much time
-                    has passed from the previous shift. If shift_interval is exceeded, the tetro is moved and the previous
-                    shift time is reassigned.
+                    time_clicked_r is the time the right button had started being depressed and then checks the current
+                    time and then checks if it has exceeded the KEY_DELAY variable. The and expression evaluates how 
+                    much time has passed from the previous shift. If SHIFT_INTERVAL is exceeded, the tetro is moved and
+                    the previous shift time is reassigned.
                     """
-                    if pygame.time.get_ticks() - time_clicked_r >= key_delay\
-                            and pygame.time.get_ticks() - prev_shift_time >= shift_interval:
+                    if pygame.time.get_ticks() - time_clicked_r >= KEY_DELAY\
+                            and pygame.time.get_ticks() - prev_shift_time >= SHIFT_INTERVAL:
                         shift_right()
                         prev_shift_time = pygame.time.get_ticks()
                 if pressed_keys[pygame.K_LEFT]:
-                    if pygame.time.get_ticks() - time_clicked_l >= key_delay\
-                            and pygame.time.get_ticks() - prev_shift_time >= shift_interval:
+                    if pygame.time.get_ticks() - time_clicked_l >= KEY_DELAY\
+                            and pygame.time.get_ticks() - prev_shift_time >= SHIFT_INTERVAL:
                         shift_left()
                         prev_shift_time = pygame.time.get_ticks()
                 if pressed_keys[pygame.K_s]:
-                    if pygame.time.get_ticks() - time_clicked_s >= key_delay - 75\
-                            and pygame.time.get_ticks() - prev_drop_time >= drop_interval:
+                    if pygame.time.get_ticks() - time_clicked_s >= KEY_DELAY - 75\
+                            and pygame.time.get_ticks() - prev_drop_time >= SHIFT_INTERVAL - 20:
                         """
                         Shift down is passed a one millisecond argument to extend the grace period.
                         """
@@ -593,9 +618,10 @@ def start_game():
                 screen.blit(bg_img, (0, 0))
                 play_surface = pygame.Surface(play_surface_size)
                 next_tetro_surface = pygame.Surface(next_surface_size)
+                scoreboard_surface = pygame.Surface(score_surface_size)
                 current_tetro.draw(play_surface)
-                for dropped_row in dropped_segments:
-                    dropped_row.draw(play_surface)
+                for row in dropped_segments:
+                    row.draw(play_surface)
                 next_tetro.draw(next_tetro_surface)
                 pygame.draw.rect(screen, (0, 0, 0), [((screen_width - play_surface_width) // 2) - 6,
                                                      ((screen_height - play_surface_height) // 2) - 6,
@@ -604,7 +630,8 @@ def start_game():
                                            ((screen_height - play_surface_height) // 2)))
                 screen.blit(next_tetro_surface, ((((right_margin - next_surface_width) // 2) + play_surface_right),
                                                  ((screen_height - play_surface_height) // 2)))
-
+                screen.blit(scoreboard_surface, ((((screen_width - play_surface_width) // 2) - score_surface_width) //2,
+                                                 ((screen_height - play_surface_height) // 2)))
                 pygame.display.flip()
             else:
                 for event in pygame.event.get():
