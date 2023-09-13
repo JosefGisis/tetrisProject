@@ -154,8 +154,10 @@ def line_animation():
                 pygame.display.flip()
 
 def filled_lines_handler():
+    global lines
     filled_lines = get_lines()
     if filled_lines:
+        lines += len(filled_lines)
         for row in dropped_segments:
             if dropped_segments.index(row) in filled_lines:
                 row.empty()
@@ -515,8 +517,9 @@ play_surface_right, play_surface_bottom = (((screen_width - play_surface_width) 
                                           (((screen_height - play_surface_height) // 2) + play_surface_height)
 right_margin = (screen_width - play_surface_right)
 next_surface_size = next_surface_width, next_surface_height = ((SEGMENT_SIZE * 5), (SEGMENT_SIZE * 6))
-score_surface_size = score_surface_width, score_surface_height = ((SEGMENT_SIZE * 6), (SEGMENT_SIZE * 16))
-
+score_surface_size = score_surface_width, score_surface_height = ((SEGMENT_SIZE * 6), (SEGMENT_SIZE * 16 + 10))
+score_banners = ["HIGHSCORE:", "LEVEL:", "LINES:", "SCORE:"]
+score_font = pygame.font.SysFont("ocraextended", 30)
 bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)
 completed_line_image1 = pygame.image.load("line_completed1.jpg")
 completed_line_image2 = pygame.image.load("line_completed2.jpg")
@@ -623,6 +626,12 @@ def start_game():
                 for row in dropped_segments:
                     row.draw(play_surface)
                 next_tetro.draw(next_tetro_surface)
+                for banner in score_banners:
+                    banner_surface = score_font.render(banner, True, (255, 255, 255))
+                    scoreboard_surface.blit(banner_surface, (10, (score_banners.index(banner)*4*SEGMENT_SIZE) + 10))
+                next_surface = score_font.render("NEXT", True, (255, 255, 255))
+                next_tetro_surface.blit(next_surface, ((next_tetro_surface.get_width() - next_surface.get_width()) // 2,
+                                                       10))
                 pygame.draw.rect(screen, (0, 0, 0), [((screen_width - play_surface_width) // 2) - 6,
                                                      ((screen_height - play_surface_height) // 2) - 6,
                                                      play_surface_width + 11, play_surface_height + 11])
