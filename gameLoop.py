@@ -432,12 +432,12 @@ be stopped when it hits a barrier but still gives the user some loops for adjust
 in a timer event later on. The key_delay, previous_shift_time, previous_drop_time, shift_interval, and drop_interval 
 variables are used in the game loop to mimic the pygame.key.set_repeat function (see later documentation).
 """
-dropped = grace_period = 50
+dropped = grace_period = 30
 key_delay = 150
 prev_shift_time = 50
 prev_drop_time = 50
-shift_interval = 50
-drop_interval = 40
+shift_interval = 60
+drop_interval = 30
 USEREVENT = 24
 
 pygame.init()
@@ -540,12 +540,12 @@ def start_game():
                     shift_left()
                     prev_shift_time = pygame.time.get_ticks()
             if pressed_keys[pygame.K_s]:
-                if pygame.time.get_ticks() - time_clicked_s >= key_delay - 50\
+                if pygame.time.get_ticks() - time_clicked_s >= key_delay - 75\
                         and pygame.time.get_ticks() - prev_drop_time >= shift_interval:
                     """
                     Shift down is passed a one millisecond argument to extend the grace period.
                     """
-                    shift_down(5)
+                    shift_down(3)
                     prev_drop_time = pygame.time.get_ticks()
 
             """
@@ -573,6 +573,19 @@ def start_game():
                 if event.type == pygame.QUIT:
                     running = False
             check_pos()
+            filled_lines = get_lines()
+            if filled_lines:
+                for h in range(3):
+                    for j in range(45):
+                        for i in filled_lines:
+                            screen.blit(completed_line_image1, (((screen_width - play_surface_width) // 2),
+                                                                (i * segment_size + ((screen_height - play_surface_height) // 2))))
+                        pygame.display.flip()
+                    for j in range(45):
+                        for i in filled_lines:
+                            screen.blit(completed_line_image2, (((screen_width - play_surface_width) // 2),
+                                                                (i * segment_size + ((screen_height - play_surface_height) // 2))))
+                        pygame.display.flip()
             filled_lines_handler()
             new_tetro()
     pygame.quit()
