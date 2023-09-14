@@ -6,7 +6,6 @@ structures each tetromino shape, and surface (regarding segments) refers to imag
 their appearance and give them colors.
 """
 import sys, pygame, random
-import numpy
 
 """
 new game
@@ -14,13 +13,14 @@ new game
 
 
 def new_game():
-    global starty, startx, dropped, rotation_state, game_over, score_list
+    global starty, startx, dropped, rotation_state, game_over, score_list, drop_rate
     current_tetro.empty()
     dropped = grace_period
+    drop_rate = 250
     rotation_state = 0
     starty = (-2 * SEGMENT_SIZE)
     startx = (3 * SEGMENT_SIZE)
-    score_list = [0, 0, 0, -10]
+    score_list = [0, 1, 0, -10]
     for row in dropped_segments:
         row.empty()
     gen_next()
@@ -157,13 +157,16 @@ def line_animation():
 
 
 def get_score():
-    global score_list
+    global score_list, drop_rate
     if not game_over:
         score_list[3] += 10
         filled_lines = get_lines()
         score_list[3] += (100 * len(filled_lines))
         score_list[2] += len(filled_lines)
-        score_list[1] = (score_list[2] // 10) + 1
+        if score_list[1] < (score_list[2] // 10) + 1:
+            score_list[1] = (score_list[2] // 10) + 1
+            drop_rate -= 20
+        else: None
 
 
 def filled_lines_handler():
@@ -466,6 +469,7 @@ KEY_DELAY = 150
 SHIFT_INTERVAL = 60
 prev_shift_time = 50
 prev_drop_time = 50
+drop_rate = 250
 
 """
 This segment contains variable that control the gameloop. Some are present because they need to initialized, and some
@@ -504,7 +508,7 @@ lines tracks how lines the player has filled, and high score compares the users 
 for their device.
 """
 score_banners = ("HIGHSCORE:", "LEVEL:", "LINES:", "SCORE:")
-score_list = [0, 0, 0, -10]
+score_list = [0, 1, 0, -10]
 
 """
 Initiates all pygame modules. Display size is contained as variables for easier access. clock is an object initialized 
@@ -590,8 +594,10 @@ def start_game():
                             ccw_rotation()
                         elif event.key == pygame.K_SPACE:
                             hard_drop()
-                    elif event.type == USEREVENT:
-                        shift_down()
+
+                if pygame.time.get_ticks() - prev_drop_time >= drop_rate:
+                    shift_down()
+                    prev_drop_time = pygame.time.get_ticks()
 
                 """
                 Pygame offers a key.set_repeat function but I could not use it because it does not differentiate between
