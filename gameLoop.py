@@ -8,22 +8,21 @@ their appearance and give them colors.
 import sys, pygame, random
 
 """
-new game
+The new game function is responsible for resetting all game loop variables. The current_tetro empty needs to be emptied
+otherwise it remains above the play surface and game over repeats. Most variables are reset when the first moving
+tetromino is generated. 
 """
 
 
 def new_game():
-    global starty, startx, dropped, rotation_state, game_over, score_list, drop_rate
+    global dropped, grace_period, game_over, score_list, drop_rate
     current_tetro.empty()
-    dropped = grace_period
+    dropped = grace_period = 30
     drop_rate = 250
-    rotation_state = 0
-    starty = (-2 * SEGMENT_SIZE)
-    startx = (3 * SEGMENT_SIZE)
     score_list = [0, 1, 0, -10]
     for row in dropped_segments:
-        row.empty()
-    gen_next()
+        row.empty()  # erases all the segments on the play surface
+    gen_next()  # starts the next, current, next ... cycle
     game_over = False
 
 
@@ -46,18 +45,19 @@ Current tetro is the is the pygame group that is responsible for the current or 
 program, tetro is always referring to tetromino). Current_tetro is declared right before the gen_tetro function for the
 sake of clarity. gen_tetro is cleared before each iteration because of the cw and ccw rotation function (see later). The
 function checks the current letter and creates a segment at the correct location. The location is determined by the loop
-and preset variable labeled startx and starty.
+and preset variable labeled tetro_left and tetro_top.
+The shape of the letter is replicated by iterating through the letter matrix and creating a sprite when the index is
+True (that is there is a one in that slot).
 """
 current_tetro = pygame.sprite.Group()
 
 
 def gen_tetro(letter, surface):
-    global starty, startx
     current_tetro.empty()
-    for row in range(len(letter)):
-        for column in range(len(letter)):
-            if letter[row][column] == 1:
-                location = [(startx + (SEGMENT_SIZE * column)), (starty + (SEGMENT_SIZE * row))]
+    for row_index, row in enumerate(letter):
+        for column_index, column in enumerate(row):
+            if column:  # is there a 1 (AKA True) in that cell
+                location = ((SEGMENT_SIZE * column_index) + tetro_left, (SEGMENT_SIZE * row_index) + tetro_top)
                 new_segment = Segment(location, surface)
                 current_tetro.add(new_segment)
 
@@ -78,25 +78,26 @@ def gen_next():
     Next_letter is picked from the list of letters and the program retrieves the correct segment surface by getting the
     letter's index and matching it to a parallel tuple.
     """
-    next_letter = random.choice(TETRO_LIST)
-    next_surface = TETRO_SURFACES[TETRO_LIST.index(next_letter)]
+    # TODO: this randomizer does not seem to work that great
+    next_letter = random.choice(TETRO_LETTERS)
+    next_surface = TETRO_SURFACES[TETRO_LETTERS.index(next_letter)]
     """
     The following code ensures the next tetromino is displayed in the center of the next piece surface. O requires
     custom logic because O if offset within its matrix, so that it displayed at the correct starting point on the play
     play surface. However this cause to not be properly display on the next piece surface.
     """
     if next_letter != O_PIECE:
-        start = ((next_surface_width - (SEGMENT_SIZE * len(next_letter))) // 2)
+        left = ((next_surface_width - (SEGMENT_SIZE * len(next_letter))) // 2)
     else:
-        start = (((next_surface_width - SEGMENT_SIZE * 2) // 2) - SEGMENT_SIZE)
-    for row in range(len(next_letter)):
-        for column in range(len(next_letter)):
-            if next_letter[row][column] == 1:
+        left = (((next_surface_width - SEGMENT_SIZE * 2) // 2) - SEGMENT_SIZE)  # SEGMENT_SIZE * 2 for width of o piece
+    for row_index, row in enumerate(next_letter):
+        for column_index, column in enumerate(row):
+            if column:
                 """
                 The horizontal location is set to be in the center, but the vertical location is pushed down to allow
-                for room for the surface banner.
+                for room for the surface banner (by a size of 3 * SEGMENT_SIZE).
                 """
-                location = [(start + (SEGMENT_SIZE * column)), (3 * SEGMENT_SIZE + (SEGMENT_SIZE * row))]
+                location = [((SEGMENT_SIZE * column_index) + left), ((SEGMENT_SIZE * row_index) + (3 * SEGMENT_SIZE))]
                 new_segment = Segment(location, next_surface)
                 next_tetro.add(new_segment)
 
@@ -157,7 +158,7 @@ def line_animation():
 
 
 def get_score():
-    global score_list, drop_rate
+    global score_list, drop_rate, grace_period
     if not game_over:
         score_list[3] += 10
         filled_lines = get_lines()
@@ -166,6 +167,7 @@ def get_score():
         if score_list[1] < (score_list[2] // 10) + 1:
             score_list[1] = (score_list[2] // 10) + 1
             drop_rate -= 20
+            grace_period += 3
         else: None
 
 
@@ -185,7 +187,7 @@ def filled_lines_handler():
                 try:
                     dropped_segments[i + len(filled_lines)].add(segment)
                     segment.rect.top += SEGMENT_SIZE * len(filled_lines)
-                except:
+                except IndexError:
                     print()
                     print("error: 001")
                     print("fatal range error")
@@ -194,9 +196,9 @@ def filled_lines_handler():
 
 
 def new_tetro():
-    global starty, startx, current_tetro, dropped, next_letter, next_surface, current_letter, current_surface, \
+    global tetro_top, tetro_left, current_tetro, dropped, next_letter, next_surface, current_letter, current_surface, \
         rotation_state
-    startx, starty = (3 * SEGMENT_SIZE), (-2 * SEGMENT_SIZE)
+    tetro_left, tetro_top = (3 * SEGMENT_SIZE), (-2 * SEGMENT_SIZE)
     current_letter, current_surface = next_letter, next_surface
     gen_tetro(current_letter, current_surface)
     gen_next()
@@ -230,8 +232,8 @@ def move_blocked(xspeed, yspeed):
 
 
 """
-The three shift functions move each square by a given size and updates the startx or starty variables to keep track of
-the pieces location (startx and starty are used when a new tetromino is generated after each rotation (see README for 
+The three shift functions move each square by a given size and updates the tetro_left or tetro_top variables to keep track of
+the pieces location (tetro_left and tetro_top are used when a new tetromino is generated after each rotation (see README for 
 more information)). Shift down increments the dropped variable if its descent is blocked. When the dropped variable
 meets the grace_period variable, the piece has officially landed and a new piece is generated. The purpose of the 
 dropped variable is to give the player a grace period to adjust the tetro after it has dropped.  
@@ -239,21 +241,21 @@ dropped variable is to give the player a grace period to adjust the tetro after 
 
 
 def shift_right():
-    global startx
+    global tetro_left
     if dropped < grace_period:
         if not move_blocked(SEGMENT_SIZE, 0):
             for segment in current_tetro.sprites():
                 segment.rect.centerx += SEGMENT_SIZE
-            startx += SEGMENT_SIZE
+            tetro_left += SEGMENT_SIZE
 
 
 def shift_left():
-    global startx
+    global tetro_left
     if dropped < grace_period:
         if not move_blocked(-SEGMENT_SIZE, 0):
             for segment in current_tetro.sprites():
                 segment.rect.centerx -= SEGMENT_SIZE
-            startx -= SEGMENT_SIZE
+            tetro_left -= SEGMENT_SIZE
 
 
 """
@@ -266,13 +268,13 @@ correct this detail.
 
 
 def shift_down(increment=10):
-    global dropped, starty
+    global dropped, tetro_top
     if move_blocked(0, SEGMENT_SIZE):
         dropped += increment
     else:
         for segment in current_tetro.sprites():
             segment.rect.centery += SEGMENT_SIZE
-        starty += SEGMENT_SIZE
+        tetro_top += SEGMENT_SIZE
 
 
 """
@@ -292,7 +294,7 @@ This function handles the clockwise rotation of the current tetro. The function 
 tetro is not the o piece (see documentation for O constant) and that the tetro has not landed yet. The function uses
 list comprehension to transpose the rows and columns and reverse the order of each row. This rotates the letter matrix
 by ninety degrees (see documentation for more information). A new tetro is generated, using the updated matrix, at the
-same spot using the tracking variables startx and starty. Then the function checks if the tetro has exceeded the
+same spot using the tracking variables tetro_left and tetro_top. Then the function checks if the tetro has exceeded the
 boundaries of the right or left walls or the floor of the play surface. If there is a collision each piece is tested in
 multiple locations (see lists below for location tests) until there is no longer a collision. If the piece cannot be
 cleared, the collision fails. The logic behind the loop is too detailed for a full explanation; please check out the
@@ -322,7 +324,7 @@ See README file for a detailed explanation of the rotation functions.
 
 
 def cw_rotation():
-    global current_letter, rotation_state, startx, starty
+    global current_letter, rotation_state, tetro_left, tetro_top
     blocked = False
     if current_letter != O_PIECE and dropped < grace_period:
         rotated_letter = [[current_letter[j][i] for j in range(len(current_letter))]
@@ -338,8 +340,8 @@ def cw_rotation():
                             for segment in current_tetro:
                                 segment.rect.left += (cw_check[i][j][0] * SEGMENT_SIZE)
                                 segment.rect.top -= (cw_check[i][j][1] * SEGMENT_SIZE)
-                            startx += (cw_check[i][j][0] * SEGMENT_SIZE)
-                            starty -= (cw_check[i][j][1] * SEGMENT_SIZE)
+                            tetro_left += (cw_check[i][j][0] * SEGMENT_SIZE)
+                            tetro_top -= (cw_check[i][j][1] * SEGMENT_SIZE)
                             if move_blocked(0, 0):
                                 blocked = True
                             else:
@@ -352,8 +354,8 @@ def cw_rotation():
                             for segment in current_tetro:
                                 segment.rect.left += (cw_ipiece_check[i][j][0] * SEGMENT_SIZE)
                                 segment.rect.top -= (cw_ipiece_check[i][j][1] * SEGMENT_SIZE)
-                            startx += (cw_ipiece_check[i][j][0] * SEGMENT_SIZE)
-                            starty -= (cw_ipiece_check[i][j][1] * SEGMENT_SIZE)
+                            tetro_left += (cw_ipiece_check[i][j][0] * SEGMENT_SIZE)
+                            tetro_top -= (cw_ipiece_check[i][j][1] * SEGMENT_SIZE)
                             if move_blocked(0, 0):
                                 blocked = True
                             else:
@@ -371,7 +373,7 @@ def cw_rotation():
 
 
 def ccw_rotation():
-    global current_letter, rotation_state, startx, starty
+    global current_letter, rotation_state, tetro_left, tetro_top
     blocked = False
     if current_letter != O_PIECE and dropped < grace_period:
         rotated_letter = [[current_letter[j][i] for j in range(len(current_letter[0]))]
@@ -386,8 +388,8 @@ def ccw_rotation():
                             for segment in current_tetro:
                                 segment.rect.left += (ccw_check[i][j][0] * SEGMENT_SIZE)
                                 segment.rect.top -= (ccw_check[i][j][1] * SEGMENT_SIZE)
-                            startx += (ccw_check[i][j][0] * SEGMENT_SIZE)
-                            starty -= (ccw_check[i][j][1] * SEGMENT_SIZE)
+                            tetro_left += (ccw_check[i][j][0] * SEGMENT_SIZE)
+                            tetro_top -= (ccw_check[i][j][1] * SEGMENT_SIZE)
                             if move_blocked(0, 0):
                                 blocked = True
                             else:
@@ -400,8 +402,8 @@ def ccw_rotation():
                             for segment in current_tetro:
                                 segment.rect.left += (ccw_ipiece_check[i][j][0] * SEGMENT_SIZE)
                                 segment.rect.top -= (ccw_ipiece_check[i][j][1] * SEGMENT_SIZE)
-                            startx += (ccw_ipiece_check[i][j][0] * SEGMENT_SIZE)
-                            starty -= (ccw_ipiece_check[i][j][1] * SEGMENT_SIZE)
+                            tetro_left += (ccw_ipiece_check[i][j][0] * SEGMENT_SIZE)
+                            tetro_top -= (ccw_ipiece_check[i][j][1] * SEGMENT_SIZE)
                             if move_blocked(0, 0):
                                 blocked = True
                             else:
@@ -430,12 +432,15 @@ I_PIECE = [[0, 0, 0, 0],
            [1, 1, 1, 1],
            [0, 0, 0, 0],
            [0, 0, 0, 0]]
+
 J_PIECE = [[1, 0, 0],
            [1, 1, 1],
            [0, 0, 0]]
+
 L_PIECE = [[0, 0, 1],
            [1, 1, 1],
            [0, 0, 0]]
+
 T_PIECE = [[0, 1, 0],
            [1, 1, 1],
            [0, 0, 0]]
@@ -446,13 +451,16 @@ O does not rotate. The matrix is larger than the shape to offset the tetro to st
 O_PIECE = [[0, 1, 1],
            [0, 1, 1],
            [0, 0, 0]]
+
 S_PIECE = [[0, 1, 1],
            [1, 1, 0],
            [0, 0, 0]]
+
 Z_PIECE = [[1, 1, 0],
            [0, 1, 1],
            [0, 0, 0]]
-TETRO_LIST = (I_PIECE, J_PIECE, L_PIECE, T_PIECE, O_PIECE, S_PIECE, Z_PIECE)
+
+TETRO_LETTERS = (I_PIECE, J_PIECE, L_PIECE, T_PIECE, O_PIECE, S_PIECE, Z_PIECE)
 TETRO_SURFACES = (pygame.image.load("teal_segment.jpg"), pygame.image.load("blue_segment.jpg"),
                   pygame.image.load("orange_segment.jpg"), pygame.image.load("purple_segment.jpg"),
                   pygame.image.load("magenta_segment.jpg"), pygame.image.load("green_segment.jpg"),
@@ -476,7 +484,7 @@ This segment contains variable that control the gameloop. Some are present becau
 others are only present for clarity (meaning they are first assigned a literal within the game loop). Rotation state is 
 the rotation degree of each tetromino (0, 90, 180, and 270). The rotation state of each piece affects its rotation
 behaviour. Current letter and next letter belong to the current tetro and next tetro respectively (same for the next
-surface and current surface). startx and starty keep track of the top left corner of each tetromino and keep track of
+surface and current surface). tetro_left and tetro_top keep track of the top left corner of each tetromino and keep track of
 the location of each current tetromino for when they are regenerated after each successful rotation (see rotation 
 functions). These need to be stored as global variables rather than attributes because each tetro is tracked as sprite
 group rather than a specific class. dropped_segments is a list of sprite groups that tracks all of the fallen 
@@ -494,8 +502,8 @@ current_letter = 0
 next_letter = 0
 next_surface = 0
 current_surface = 0
-starty = (-2 * SEGMENT_SIZE)
-startx = (3 * SEGMENT_SIZE)
+tetro_top = (-2 * SEGMENT_SIZE)
+tetro_left = (3 * SEGMENT_SIZE)
 
 dropped_segments = []
 for i in range(20):
