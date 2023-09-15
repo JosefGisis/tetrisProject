@@ -15,11 +15,11 @@ tetromino is generated.
 
 
 def new_game():
-    global dropped, grace_period, game_over, score_list, drop_rate
+    global dropped, grace_period, game_over, score_dict, drop_rate
     current_tetro.empty()
     dropped = grace_period = 30
     drop_rate = 250
-    score_list = [0, 1, 0, -10]
+    score_dict = {"HIGHSCORE:": 0, "LEVEL:": 1, "LINES:": 0, "SCORE:": -10}
     for row in dropped_segments:
         row.empty()  # erases all the segments on the play surface
     gen_next()  # starts the next, current, next ... cycle
@@ -27,6 +27,7 @@ def new_game():
 
 
 """
+The following functions and classes are responsible for creating, managing and handling current and next tetrominos.
 This is the segment class for all tetrominos. Throughout the program, segment refers to all of the four parts each     
 tetromino is made up of. The Segment class takes a location and surface argument to generate each piece.
 """
@@ -102,15 +103,22 @@ def gen_next():
                 next_tetro.add(new_segment)
 
 
+def new_tetro():  # creates new tetro when current tetro has dropped
+    global tetro_top, tetro_left, current_tetro, dropped, current_letter, current_surface, rotation_state
+    tetro_left, tetro_top = (3 * SEGMENT_SIZE), (-2 * SEGMENT_SIZE)  # sets tetromino starting point
+    current_letter, current_surface = next_letter, next_surface  # current tetro inherits next tetro's shape and surface
+    gen_tetro(current_letter, current_surface)  # generate new current tetro
+    gen_next()
+    dropped = 0
+    rotation_state = 0  # new tetro is dropping at its spawn state
+
+
 """
 The following set of functions handle fallen tetrominos and line completion. check_pos checks the location of each tetro
 after it has landed. Then the tetromino's segments are assigned to a sprite group depending on its vertical location.
 The group is accessed through an index in the dropped segments list. 
 get_lines returns a list of all the lines that have not been filled. The function iterates through the dropped_segments
-list and iterates through each sprite groupo and increments i by one for every sprite within the group. When i equals 9
-(that is it has be incremented 10 times) the line is added to the filled_lines list. Once the function has iterated
-through all 20 rows, the function returns filled_lines. Note: line, if dropped_segments[row]: tests if there is anything
-in that row and skips otherwise.
+list and iterates through each sprite group. If a group has ten segments in it, that line is added to the list.
 line_animations displays a filled line animations. The function and animation will likely be changed in the future.
 filled_line_handler empties all the filled rows and moves down all the above segments (see function for more
 documentation).
@@ -123,23 +131,14 @@ def check_pos():
         if segment.rect.top < 0:
             game_over = True
         else:
-            dropped_segments[segment.rect.top // SEGMENT_SIZE].add(segment)
+            dropped_segments[segment.rect.top // SEGMENT_SIZE].add(segment)  # assigns the segment to the correct row
 
 
-def get_lines():
-    filled_lines = []
-    i = 0
-    for row in range(len(dropped_segments)):
-        if dropped_segments[row]:
-            for segment in dropped_segments[row]:
-                if i == 9:
-                    filled_lines.append(row)
-                else: i += 1
-            i = 0
-    return filled_lines
+def get_lines(): 
+    return[row_index for row_index, row in enumerate(dropped_segments) if len(row) == 10]
 
 
-def line_animation():
+def line_animation():  # temporary function
     filled_lines = get_lines()
     if filled_lines:
         for h in range(3):
@@ -157,53 +156,37 @@ def line_animation():
                 pygame.display.flip()
 
 
+"""
+This function updates the users score. The function works but needs significant improvement. Additionally the 
+scoreboard may be better handled as a class, with the score being attributes. The drop_rate and grace_period should be
+handled elsewhere. 
+"""
+
+
 def get_score():
-    global score_list, drop_rate, grace_period
-    if not game_over:
-        score_list[3] += 10
+    # TODO: score and scoreboard may better be implemented as a class
+    # TODO: move drop rate and grace period to the new tetro function
+    global score_dict, drop_rate, grace_period
+    if not game_over:  # ensures the user does not get points for tetrominos landed after they have hit the top
+        score_dict["SCORE:"] += 10
         filled_lines = get_lines()
-        score_list[3] += (100 * len(filled_lines))
-        score_list[2] += len(filled_lines)
-        if score_list[1] < (score_list[2] // 10) + 1:
-            score_list[1] = (score_list[2] // 10) + 1
-            drop_rate -= 20
-            grace_period += 3
-        else: None
+        score_dict["SCORE:"] += (100 * len(filled_lines))
+        score_dict["LINES:"] += len(filled_lines)
+        if score_dict["LEVEL:"] < (score_dict["LINES:"] // 10) + 1:
+            score_dict["LEVEL:"] = (score_dict["LINES:"] // 10) + 1
+            drop_rate -= 20  # drop rate decreases by 20 milliseconds
+            grace_period += 4  # grace period increases by 4 milliseconds
 
 
 def filled_lines_handler():
-    global lines
     filled_lines = get_lines()
-    if filled_lines:
-        for row in dropped_segments:
-            if dropped_segments.index(row) in filled_lines:
-                row.empty()
-
-        # TODO: when the line get higher the list gets out range and causes problems.
-        # TODO: another issue may be that if two line get destroyed that are not concurrent bugs may occur
-
-        for i in range((filled_lines[0]) -1, -1, -1):
+    for line in (filled_lines):
+        dropped_segments[line].empty()
+        for i in range(line - 1, -1, -1):
             for segment in dropped_segments[i].sprites():
-                try:
-                    dropped_segments[i + len(filled_lines)].add(segment)
-                    segment.rect.top += SEGMENT_SIZE * len(filled_lines)
-                except IndexError:
-                    print()
-                    print("error: 001")
-                    print("fatal range error")
-                    return None
+                dropped_segments[i + 1].add(segment)
+                segment.rect.top += SEGMENT_SIZE
             dropped_segments[i].empty()
-
-
-def new_tetro():
-    global tetro_top, tetro_left, current_tetro, dropped, next_letter, next_surface, current_letter, current_surface, \
-        rotation_state
-    tetro_left, tetro_top = (3 * SEGMENT_SIZE), (-2 * SEGMENT_SIZE)
-    current_letter, current_surface = next_letter, next_surface
-    gen_tetro(current_letter, current_surface)
-    gen_next()
-    dropped = 0
-    rotation_state = 0
 
 
 """
@@ -515,8 +498,7 @@ This is a dictionary of scoreboard trackers. Level tacks the difficulty, current
 lines tracks how lines the player has filled, and high score compares the users current_score with the highest score 
 for their device.
 """
-score_banners = ("HIGHSCORE:", "LEVEL:", "LINES:", "SCORE:")
-score_list = [0, 1, 0, -10]
+score_dict = {"HIGHSCORE:": 0, "LEVEL:": 1, "LINES:": 0, "SCORE:": -10}
 
 """
 Initiates all pygame modules. Display size is contained as variables for easier access. clock is an object initialized 
@@ -653,11 +635,11 @@ def start_game():
                 for row in dropped_segments:
                     row.draw(play_surface)
                 next_tetro.draw(next_tetro_surface)
-                for i in range(len(score_banners)):
-                    banner_surface = score_font.render(score_banners[i], True, (255, 255, 255))
-                    score_surface = title_font.render(str(score_list[i]), True, (175, 100, 255))
-                    scoreboard_surface.blit(banner_surface, (10, ((i*4*SEGMENT_SIZE) + 10)))
-                    scoreboard_surface.blit(score_surface, (10, ((i*4*SEGMENT_SIZE) + 10 + 2 * SEGMENT_SIZE)))
+                for item_index, (banner, score) in enumerate(score_dict.items()):
+                    banner_surface = score_font.render(banner, True, (255, 255, 255))
+                    score_surface = title_font.render(str(score), True, (175, 100, 255))
+                    scoreboard_surface.blit(banner_surface, (10, ((item_index*4*SEGMENT_SIZE) + 10)))
+                    scoreboard_surface.blit(score_surface, (10, ((item_index*4*SEGMENT_SIZE) + 10 + 2 * SEGMENT_SIZE)))
                 next_surface = score_font.render("NEXT", True, (255, 255, 255))
                 next_tetro_surface.blit(next_surface, ((next_tetro_surface.get_width() - next_surface.get_width()) // 2,
                                                        10))
