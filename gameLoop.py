@@ -180,7 +180,7 @@ def get_score():
 
 def filled_lines_handler():
     filled_lines = get_lines()
-    for line in (filled_lines):
+    for line in filled_lines:
         dropped_segments[line].empty()
         for i in range(line - 1, -1, -1):
             for segment in dropped_segments[i].sprites():
