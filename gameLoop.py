@@ -178,64 +178,72 @@ def get_score():
             grace_period += 4  # grace period increases by 4 milliseconds
 
 
+"""
+Filled lines handler retrieves a list of filled lines and assigns and empties the correct pygame sprite groups. It
+starts from the first filled line, erases that sprite groups contents, and moves all the lines above it down. This
+is repeated for all the filled lines.  
+Cascading effect refers to logical errors in shifting down rows. For example: if the function were to shift rows
+starting from the top row, the contents of the previous row would be placed in the following row, adding sprites that
+do not belong in that row. This can mean that row contains more than ten squares. Nor can the function preemptively 
+empty the contents of the following row because we have not shifted them yet. Therefor we need to shift row in reverse.
+"""
+
+
 def filled_lines_handler():
     filled_lines = get_lines()
-    for line in filled_lines:
-        dropped_segments[line].empty()
-        for i in range(line - 1, -1, -1):
-            for segment in dropped_segments[i].sprites():
+    for line in filled_lines:  # starts with the first filled line
+        dropped_segments[line].empty()  # empties the matching sprite group
+        for i in range(line - 1, -1, -1):  # above lines are shifted down in reverse to prevent cascading effect
+            for segment in dropped_segments[i].sprites():  # moves group contents to group beneath it
                 dropped_segments[i + 1].add(segment)
-                segment.rect.top += SEGMENT_SIZE
-            dropped_segments[i].empty()
+                segment.rect.top += SEGMENT_SIZE  # repositions Square sprite
+            dropped_segments[i].empty()  # empties sprite after moving contents down to prevent cascading effect
 
 
 """
 The move_blocked function checks if the tetro can make another move. The function checks if the piece can move without
-being blocked by adding the xspeed and yspeed variables (speed refers to the jump size and direction). If the function
+being blocked by adding the x_move and y_move variables (speed refers to the jump size and direction). If the function
 returns true, the move is blocked (see README file for more information on collision detection).
 """
 
 
-def move_blocked(xspeed, yspeed):
+def move_blocked(x_move, y_move):
     for segment in current_tetro:
         """
         Checks the tetromino if it will be blocked by the right or left wall or floor of the play surface. The next
-        location is obtained by taking the tetro's current location ans adds the xspeed and yspeed respectively.
+        location is obtained by taking the tetro's current location ans adds the x_move and y_move respectively.
         """
-        next_location = [(segment.rect.left + xspeed), (segment.rect.top + yspeed)]
-        if next_location[0] < 0 or next_location[0] >= play_surface_width or next_location[1] >= play_surface_height:
+        next_left, next_top = (segment.rect.left + x_move), (segment.rect.top + y_move)
+        if next_left < 0 or next_left >= play_surface_width or next_top >= play_surface_height:
             return True
-        """
-        The function checks if the tetromino is going to collide with any dropped tetrominos. 
-        """
-        for dropped_row in dropped_segments:
-            for square in dropped_row.sprites():
-                if next_location[0] == square.rect.left and next_location[1] == square.rect.top:
+        for row in dropped_segments:  # checks if collision with dropped tetrominos
+            for square in row.sprites():
+                if next_left == square.rect.left and next_top == square.rect.top:
                     return True
 
 
 """
-The three shift functions move each square by a given size and updates the tetro_left or tetro_top variables to keep track of
-the pieces location (tetro_left and tetro_top are used when a new tetromino is generated after each rotation (see README for 
-more information)). Shift down increments the dropped variable if its descent is blocked. When the dropped variable
-meets the grace_period variable, the piece has officially landed and a new piece is generated. The purpose of the 
-dropped variable is to give the player a grace period to adjust the tetro after it has dropped.  
+The three shift functions move each square by a given size and updates the tetro_left or tetro_top variables to keep 
+track of the pieces location (tetro_left and tetro_top are used when a new tetromino is generated after each rotation
+(see README for more information)). Shift down increments the dropped variable if its descent is blocked. When the
+dropped variable meets the grace_period variable, the piece has officially landed and a new piece is generated. 
+The purpose of the dropped variable is to give the player a grace period to adjust the tetro after it has dropped.  
 """
 
 
 def shift_right():
     global tetro_left
     if dropped < grace_period:
-        if not move_blocked(SEGMENT_SIZE, 0):
+        if not move_blocked(SEGMENT_SIZE, 0):  # checks if piece will collide 36 pixels to the right
             for segment in current_tetro.sprites():
                 segment.rect.centerx += SEGMENT_SIZE
-            tetro_left += SEGMENT_SIZE
+            tetro_left += SEGMENT_SIZE  # updates the tetrominos leftmost position
 
 
 def shift_left():
     global tetro_left
     if dropped < grace_period:
-        if not move_blocked(-SEGMENT_SIZE, 0):
+        if not move_blocked(-SEGMENT_SIZE, 0):  # checks if piece will collide 36 pixels to the left
             for segment in current_tetro.sprites():
                 segment.rect.centerx -= SEGMENT_SIZE
             tetro_left -= SEGMENT_SIZE
@@ -245,31 +253,26 @@ def shift_left():
 Shift down has a special optional argument that checks if the user is speeding up the descent of the tetromino. When the
 player performs an accelerated drop dropped, the dropped variable may shorten the duration the user can adjust the tetro
 after its drop. The optional argument slows down the grace period. However, if the player continues to hold down the 
-accelerated descent button after the tetro has dropped, the grace period will still be shortened. Future versions may 
-correct this detail.
+accelerated descent button after the tetro has dropped, the grace period will still be shortened.
 """
 
 
-def shift_down(increment=10):
+def shift_down(increment=10):  # default increment of 10
     global dropped, tetro_top
     if move_blocked(0, SEGMENT_SIZE):
-        dropped += increment
+        dropped += increment  # when dropped = increment the piece will have landed and a new piece will be generated
     else:
         for segment in current_tetro.sprites():
             segment.rect.centery += SEGMENT_SIZE
         tetro_top += SEGMENT_SIZE
 
 
-"""
-This function instantly drops the falling tetromino. The player is given no grace period.
-"""
 
-
-def hard_drop():
+def hard_drop():  # this function instantly drops the tetromino
     global dropped
-    while not move_blocked(0, SEGMENT_SIZE):
+    while not move_blocked(0, SEGMENT_SIZE):  # while tetro has not hit the bottom yet
         shift_down()
-        dropped = grace_period
+        dropped = grace_period  # no grace period is given
 
 
 """
