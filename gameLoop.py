@@ -196,6 +196,7 @@ def line_animation():  # temporary function
                                  (i * SEGMENT_SIZE + ((screen_height - play_surface_height) // 2))))
                 pygame.display.flip()
 
+
 """
 Filled lines handler retrieves a list of filled lines and assigns and empties the correct pygame sprite groups. It
 starts from the first filled line, erases that sprite groups contents, and moves all the lines above it down. This
@@ -425,7 +426,6 @@ def ccw_rotation():
 
 
 def update_play_surface():
-    global play_surface
     play_surface = pygame.Surface(play_surface_size)
     current_tetro.draw(play_surface)  # uses sprite group to draw the current tetromino
     for row in dropped_segments:
