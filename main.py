@@ -187,14 +187,12 @@ def line_animation():  # temporary function
         for h in range(3):
             for j in range(45):
                 for i in filled_lines:
-                    screen.blit(completed_line_image1,
-                                (((screen_width - play_surface_width) // 2),
+                    screen.blit(line_image1, (((screen_width - play_surface_width) // 2),
                                  (i * SEGMENT_SIZE + ((screen_height - play_surface_height) // 2))))
                 pygame.display.flip()
             for j in range(45):
                 for i in filled_lines:
-                    screen.blit(completed_line_image2,
-                                (((screen_width - play_surface_width) // 2),
+                    screen.blit(line_image2, (((screen_width - play_surface_width) // 2),
                                  (i * SEGMENT_SIZE + ((screen_height - play_surface_height) // 2))))
                 pygame.display.flip()
 
@@ -582,8 +580,8 @@ controls_font = pygame.font.SysFont("ocraextended", 18)
 keys = ["KEYS", "_______", "ESC: pause menu", "R ARROW: move right", "L ARROW: move left", "D: rotate right",
                 "A: rotate left", "S: fast drop", "SPACE: hard drop"]
 next_banner_surface = score_font.render("NEXT", True, (255, 255, 255))
-completed_line_image1 = pygame.image.load("line_completed1.jpg")
-completed_line_image2 = pygame.image.load("line_completed2.jpg")
+line_image1 = pygame.image.load("line_completed1.jpg")
+line_image2 = pygame.image.load("line_completed2.jpg")
 
 
 """
@@ -594,22 +592,35 @@ scoreboard_rect = [((play_surface_left - SEGMENT_SIZE * 6) // 2), play_surface_t
                    (SEGMENT_SIZE * 16 + 10)]  # the plus 10 is just the offset determined by the banners
 scoreboard = Scoreboard(scoreboard_rect, [0, 1, 0, -10])
 gen_next()
+
+pause_surface = pygame.Surface((8 * SEGMENT_SIZE, 18 * SEGMENT_SIZE))
 button_left = (screen_width - 500) / 2  # gets the starting point of the button
 start_button = button.Button(screen, (button_left, 315),
                              pygame.image.load("start_button1.jpg"), pygame.image.load("start_button2.jpg"))
 help_button = button.Button(screen, (button_left, 415),
-                            pygame.image.load("start_button3.jpg"), pygame.image.load("start_button4.jpg"))
+                            pygame.image.load("help_button1.jpg"), pygame.image.load("help_button2.jpg"))
 exit_button = button.Button(screen, (button_left, 515),
-                            pygame.image.load("start_button5.jpg"), pygame.image.load("start_button6.jpg"))
+                            pygame.image.load("exit_button1.jpg"), pygame.image.load("exit_button2.jpg"))
+resume_button = button.Button(pause_surface, (0, 0), pygame.image.load("resume_button1.jpg"),
+                              pygame.image.load("resume_button2.jpg"),
+                              ((screen_width - 8 * SEGMENT_SIZE) // 2, (screen_height - 18 * SEGMENT_SIZE) // 2))
+menu_button = button.Button(pause_surface, (0, 75), pygame.image.load("main_menu1.jpg"),
+                            pygame.image.load("main_menu2.jpg"),
+                            ((screen_width - 8 * SEGMENT_SIZE) // 2, (screen_height - 18 * SEGMENT_SIZE) // 2))
+title_surf = banner_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
+title_pos = (((screen_width - title_surf.get_width())/2), 150)
+copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.0", True, color_dict["white"])
+copyrite_pos = (((screen_width - copyrite_surf.get_width()) / 2), 625)
 
-def start_menu():
+
+def start_menu():  # function for the main menu
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+            elif event.type == pygame.KEYDOWN:  # button interaction handled below, these are keyboard shortcuts
+                if pygame.key.get_mods() & pygame.KMOD_SHIFT:  # checks if user is holding modifying button
                     if event.key == pygame.K_g:
                         return "start"
                     elif event.key == pygame.K_h:
@@ -618,27 +629,21 @@ def start_menu():
                         running = False
 
         screen.blit(bg_img, (0, 0))
-        title_surf = banner_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
-        title_pos = (((screen_width - title_surf.get_width())/2), 150)
         screen.blit(title_surf, title_pos)
-        copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.0", True, color_dict["white"])
-        copyrite_pos = (((screen_width - copyrite_surf.get_width())/2), 625)
         screen.blit(copyrite_surf, copyrite_pos)
 
-        if start_button.update_button():
-            return "start"
+        if start_button.update_button():  # displays start button and checks if user has clicked
+            return "start"  # when user clicks button
         elif help_button.update_button():
             return "help and info"
         elif exit_button.update_button():
-            running = False
+            running = False  # ends game loop
 
         pygame.display.flip()
-    return "exit"
+    return "exit"  # once game loop is ended and no game states are returned, program ends
 
-"""
-This is the main game loop.
-"""
-def start_game():
+
+def start_game():  # main game loop functions
     global prev_shift_time, prev_drop_time, game_over
     running = True
     while running:
@@ -755,14 +760,17 @@ def pause_menu():
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    game_state = "start"
-                    return game_state
+                    return "start"
 
-        pygame.draw.rect(screen, color_dict["black"],
-                         ((screen_width - 8 * SEGMENT_SIZE) // 2, (screen_height - 18 * SEGMENT_SIZE) // 2,
-                          8 * SEGMENT_SIZE, 18 * SEGMENT_SIZE))
+
+        pause_surface.fill(color_dict["darker purple"])
+        if resume_button.update_button():
+            return "start"
+        if menu_button.update_button():
+            return "main menu"
+        screen.blit(pause_surface, ((screen_width - 8 * SEGMENT_SIZE) // 2, (screen_height - 18 * SEGMENT_SIZE) // 2))
         pygame.display.flip()
-    pygame.quit()
+    return "exit"
 
 """This is a placeholder function"""
 def game_over():
@@ -804,14 +812,10 @@ def help_and_info():
 
 
 """
-This is the central loop that controls the state of the game. Each state of the game
-has a function (e.g. start game, game over, menu), and the game state is controlled by 
-a return variable within each function.
-
-Once an event assigns a new game state to the game state variable, the function returns
-the game state and starts a new function.
-
-The pause menu and game over screen may be changed to be contained within the game loop.
+    This is the central loop that controls the state of the game. Each game state has a function (e.g. start game, 
+game over, menu), and the game state is controlled by a return variable within each function.
+    Once an event assigns a new game state to the game state variable, the function returns the game state and starts
+a new function.
 """
 game_state = "main menu"
 while True:
