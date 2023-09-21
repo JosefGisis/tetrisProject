@@ -5,7 +5,8 @@ structures each tetromino shape, and surface (regarding segments) refers to imag
 their appearance and give them colors.
 """
 import sys, pygame, random
-import button
+import button as btn
+import tools as tls
 
 
 class Scoreboard():  # this is the scoreboard object that displays and tracks scores
@@ -35,8 +36,8 @@ class Scoreboard():  # this is the scoreboard object that displays and tracks sc
         self.surface = pygame.Surface((self.width, self.height))  # creates new surface to clear previous scoreboard
         scores = (self.highscore, self.level, self.lines, self.score)
         for index, banner in enumerate(self.banners):
-            banner_surface = score_font.render(banner, True, (255, 255, 255))
-            score_surface = title_font.render(str(scores[index]), True, (175, 100, 255))
+            banner_surface = banner_font.render(banner, True, (255, 255, 255))
+            score_surface = score_font.render(str(scores[index]), True, (175, 100, 255))
             self.surface.blit(banner_surface, (10, ((index * 4 * SEGMENT_SIZE) + 10)))  # text is 10 pixels from border
             self.surface.blit(score_surface, (10, ((2 * SEGMENT_SIZE) + (index * 4 * SEGMENT_SIZE) + 10)))
         screen.blit(self.surface, (self.left, self.top))
@@ -77,15 +78,12 @@ def new_game():
 
 
 """
-Current tetro is the is the pygame group that is responsible for the current or falling tetromino (throughout the
-program, tetro is always referring to tetromino). Current_tetro is declared right before the gen_tetro function for the
-sake of clarity. gen_tetro is cleared before each iteration because of the cw and ccw rotation function (see later). The
+gen_tetro is cleared before each iteration because of the cw and ccw rotation function (see later). The
 function checks the current letter and creates a segment at the correct location. The location is determined by the loop
 and preset variable labeled tetro_left and tetro_top.
 The shape of the letter is replicated by iterating through the letter matrix and creating a sprite when the index is
 True (that is there is a one in that slot).
 """
-current_tetro = pygame.sprite.Group()
 
 
 def gen_tetro(letter, surface):
@@ -99,12 +97,10 @@ def gen_tetro(letter, surface):
 
 
 """
-Same as the previous function, next_tetro is a sprite group declared before its respective function for the sake of 
-clarity. Each tetro is generated along with the next tetro. The gen_next function assigns the shape of the tetro as well
+Each tetro is generated along with the next tetro. The gen_next function assigns the shape of the tetro as well
 as the color (referred to as surface). Rather than being displayed on the play surface, the next tetro is displayed on a
 board meant to display the next piece. The location expression is temporary a will be corrected later.
 """
-next_tetro = pygame.sprite.Group()
 
 
 def gen_next():
@@ -123,9 +119,9 @@ def gen_next():
     play surface. However this cause to not be properly display on the next piece surface.
     """
     if next_letter != O_PIECE:
-        left = ((next_surface_width - (SEGMENT_SIZE * len(next_letter))) // 2)
+        left = tls.center(next_surface_width, SEGMENT_SIZE * len(next_letter))
     else:
-        left = (((next_surface_width - SEGMENT_SIZE * 2) // 2) - SEGMENT_SIZE)  # SEGMENT_SIZE * 2 for width of o piece
+        left = tls.center(next_surface_width, SEGMENT_SIZE * 2) - SEGMENT_SIZE  # SEGMENT_SIZEx2 for width of o piece
     for row_index, row in enumerate(next_letter):
         for column_index, column in enumerate(row):
             if column:
@@ -187,8 +183,8 @@ def line_animation():  # temporary function
         for h in range(3):
             for j in range(45):
                 for i in filled_lines:
-                    screen.blit(line_image1, (((screen_width - play_surface_width) // 2),
-                                 (i * SEGMENT_SIZE + ((screen_height - play_surface_height) // 2))))
+                    screen.blit(line_image1, (tls.center(screen_width, play_surface_width),
+                                 (i * SEGMENT_SIZE + tls.center(screen_height, play_surface_height))))
                 pygame.display.flip()
             for j in range(45):
                 for i in filled_lines:
@@ -429,48 +425,65 @@ def update_play_surface():
     current_tetro.draw(play_surface)  # uses sprite group to draw the current tetromino
     for row in dropped_segments:
         row.draw(play_surface)  # draws all the fallen pieces
-    pygame.draw.rect(screen, (0, 0, 0), [((screen_width - play_surface_width) // 2) - 6,  # play surface border
-                                         ((screen_height - play_surface_height) // 2) - 6,
-                                         play_surface_width + 11, play_surface_height + 11])
+    # Border is given one more pixel top and left because tetris pieces do not have borders top and left
+    pygame.draw.rect(screen, (0, 0, 0), [tls.center(screen_width, play_surface_width) - 6,
+                                         tls.center(screen_height, play_surface_height) - 6, play_surface_width + 11,
+                                         play_surface_height + 11])
     screen.blit(play_surface, (play_surface_left, play_surface_top))
 
 
 def display_next():
     next_tetro_surface = pygame.Surface(next_surface_size)
     next_tetro.draw(next_tetro_surface)  # draw the next tetro onto the next tetro surface
-    next_tetro_surface.blit(next_banner_surface,  # display next banner in the center of next piece surface
-                            ((next_tetro_surface.get_width() - next_banner_surface.get_width()) // 2, 10))
-    screen.blit(next_tetro_surface, ((((right_margin - next_surface_width) // 2) + play_surface_right),
-                                     ((screen_height - play_surface_height) // 2)))
+    next_tetro_surface.blit(next_banner_surface, next_banner_pos)
+    screen.blit(next_tetro_surface, next_surface_pos)
 
 def display_keys():
-    for key in keys:
+    for key_index, key in enumerate(keys):
         if key == "KEYS":
-            control_surface = score_font.render(key, True, (255, 255, 255))
+            key_surface = banner_font.render(key, True, (255, 255, 255))
         else:
-            control_surface = controls_font.render(key, True, (255, 255, 255))
-        screen.blit(control_surface, ((((right_margin - next_surface_width) // 2) + play_surface_right),
-                                      keys.index(key) * SEGMENT_SIZE + 450))
+            key_surface = keys_font.render(key, True, (255, 255, 255))
+        screen.blit(key_surface, (tls.center(right_margin, next_surface_width) + play_surface_right,
+                                  key_index * SEGMENT_SIZE + 450))
 
 
 """
-Initiates all pygame modules. Display size is contained as variables for easier access. clock is an object initialized 
-from Pygame's Clock class. USEREVENT is a custom timer responsible for moving the tetrominos down.
+decelerations
+________________________________________________________________________________________________________________________
 """
+
+# initiates all pygame modules
 pygame.init()
 display_size = screen_width, screen_height = (1000, 800)
 screen = pygame.display.set_mode(display_size)
 pygame.display.set_caption("TITLE PLACEHOLDER")
-clock = pygame.time.Clock()
+clock = pygame.time.Clock()  # creates a Pygame clock object
+
 
 """
-This segment contains constants used throughout the game loop. 
-Each letter (tetromino shape) has an image associated with it called the _____ surface. The tetro tuple and surface
-tuple are parallel arrays and each tetromino has a surface associated with its shape. Segment size is the size of each
-tetromino segment and is essential to most other aspect of the program. The start location of each tetro, play surface
-size, movement size, etc. are determined by SEGMENT_SIZE. USEREVENT is a custom event used in a timer event within the
-game loop.
+This segment contains variables/constants/objects used throughout the program
+________________________________________________________________________________________________________________________
 """
+SEGMENT_SIZE = 36  # segment size is based on tetro segment sizes and controls dimensions throughout the program
+color_dict = {"black": (0, 0, 0), "white": (255, 255, 255), "dark purple": (75, 25, 100), "darker purple": (50, 0, 75)}
+main_font = "ocraextended"
+copyrite_font = pygame.font.Font(None, 30)  # small font for copyrite and version information
+title_font = pygame.font.SysFont(main_font, 80)  # large font for titles
+score_font = pygame.font.SysFont(main_font, 40)  # font for game scores
+banner_font = pygame.font.SysFont(main_font, 35)  # banner font
+keys_font = pygame.font.SysFont(main_font, 18)  # font for keys instructions
+bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)  # bg image used throughout the game
+
+
+"""
+This segment contains variables/constants/constants used in the game loop.
+________________________________________________________________________________________________________________________
+"""
+game_over = False
+dropped = grace_period = 30
+
+# The following list array constants are used in the gen_tetro function to generate letter shapes
 I_PIECE = [[0, 0, 0, 0],
            [1, 1, 1, 1],
            [0, 0, 0, 0],
@@ -488,9 +501,7 @@ T_PIECE = [[0, 1, 0],
            [1, 1, 1],
            [0, 0, 0]]
 
-"""
-O does not rotate. The matrix is larger than the shape to offset the tetro to start at the correct position.
-"""
+# O does not rotate. The matrix is larger than the shape to offset the tetro's start location.
 O_PIECE = [[0, 1, 1],
            [0, 1, 1],
            [0, 0, 0]]
@@ -503,117 +514,108 @@ Z_PIECE = [[1, 1, 0],
            [0, 1, 1],
            [0, 0, 0]]
 
+# parallel lists that match tetris shapes with their correct surface (each surface has a specified color)
 TETRO_LETTERS = (I_PIECE, J_PIECE, L_PIECE, T_PIECE, O_PIECE, S_PIECE, Z_PIECE)
 TETRO_SURFACES = (pygame.image.load("teal_segment.jpg"), pygame.image.load("blue_segment.jpg"),
                   pygame.image.load("orange_segment.jpg"), pygame.image.load("purple_segment.jpg"),
                   pygame.image.load("magenta_segment.jpg"), pygame.image.load("green_segment.jpg"),
                   pygame.image.load("red_segment.jpg"))
+current_tetro = pygame.sprite.Group()  # falling tetromino group
+next_tetro = pygame.sprite.Group()  # upcoming tetromino group
 
-dropped_segments = []
+current_letter = 0  # falling tetromino's letter shape
+current_surface = 0  # associated surface/color
+next_letter = 0  # next tetromino's letter shape
+next_surface = 0  # next tetromino's surface/color
+rotation_state = 0  # falling tetromino's degree of rotation (0: 0, 1: 90, 2: 180, 3: 270)
+tetro_left = (3 * SEGMENT_SIZE)  # falling tetromino's leftmost position
+tetro_top = (-2 * SEGMENT_SIZE)  # falling tetromino's topmost position
+
+
+dropped_segments = []  # This list and loop create an array of sprite groups. Each group tracks one of twenty rows
 for i in range(20):
     dropped_row = pygame.sprite.Group()
     dropped_segments.append(dropped_row)
 
-"""
-The KEY_DELAY and SHIFT_INTERVAL constants and the previous_shift_time and previous_drop_time variables are used in the
-game loop to mimic the pygame.key.set_repeat function (see later documentation). Literal are in milliseconds. 
-"""
-KEY_DELAY = 150
-SHIFT_INTERVAL = 60
-prev_shift_time = 50
-prev_drop_time = 50
-drop_rate = 250
+KEY_DELAY = 150  # used to delay hold down button feature. Literal represents milliseconds
+SHIFT_INTERVAL = 60  # interval to slow tetro movement
+prev_shift_time = 50  # tracks previous movement time for comparison with SHIFT_INTERVAL
+prev_drop_time = 50  # track previous drop time for comparison with SHIFT_INTERVAL and drop_rate
+drop_rate = 250  # controls tetromino drop rate and decreases with difficulty
 
-"""
-This segment contains variable that control the gameloop. Some are present because they need to initialized, and some
-others are only present for clarity (meaning they are first assigned a literal within the game loop). Rotation state is 
-the rotation degree of each tetromino (0, 90, 180, and 270). The rotation state of each piece affects its rotation
-behaviour. Current letter and next letter belong to the current tetro and next tetro respectively (same for the next
-surface and current surface). tetro_left and tetro_top keep track of the top left corner of each tetromino and keep track of
-the location of each current tetromino for when they are regenerated after each successful rotation (see rotation 
-functions). These need to be stored as global variables rather than attributes because each tetro is tracked as sprite
-group rather than a specific class. dropped_segments is a list of sprite groups that tracks all of the fallen 
-tetrominos. Fallen pieces are kept in seperate groups depending on their row in order to track which lines have been
-filled. game_over starts a new game when necessary. 
-Dropped and grace_period coordinate falling pieces. If dropped is less than grace_period the pieces is still falling, 
-else the piece has dropped and a new piece is called. The grace_period variable allows the user to have a couple of 
-moments for movement even if the piece has been blocked. The seperate variable dropped and blocked allows the piece to
-be stopped when it hits a barrier but still gives the user some loops for adjustments.
-"""
-SEGMENT_SIZE = 36
-dropped = grace_period = 30
-game_over = False
-rotation_state = 0
-current_letter = 0
-next_letter = 0
-next_surface = 0
-current_surface = 0
-tetro_top = (-2 * SEGMENT_SIZE)
-tetro_left = (3 * SEGMENT_SIZE)
-
-color_dict = {"black": (0, 0, 0), "white": (255, 255, 255), "purple": (208, 48, 217),
-              "dark purple": (75, 25, 100), "darker purple": (50, 0, 75), "red": (227, 11, 33),
-              "teal": (13, 209, 180), "blue": (14, 97, 240), "green": (8, 199, 24),
-              "magenta": (199, 8, 126), "coral": (255, 127, 80)}
-
-"""
-These are some variables to set the size of the play surface, as well determine the right and bottom boundaries of the
-play surface. The right and bottom borders help determine the right margin. Right margin determines where other surface
-can be displayed.
-"""
-play_surface_size = (play_surface_width, play_surface_height) = ((SEGMENT_SIZE * 10), (SEGMENT_SIZE * 20))
-play_surface_left, play_surface_top = ((screen_width - play_surface_width) // 2,
-                                       (screen_height - play_surface_height) // 2)
-play_surface_right, play_surface_bottom = (((screen_width - play_surface_width) // 2) + play_surface_width,
-                                           ((screen_height - play_surface_height) // 2) + play_surface_height)
-right_margin = (screen_width - play_surface_right)
-
-next_surface_size = next_surface_width, next_surface_height = ((SEGMENT_SIZE * 5), (SEGMENT_SIZE * 6))
-
-main_font = "ocraextended"
-copyrite_font = pygame.font.Font(None, 30)
-banner_font = pygame.font.SysFont(main_font, 80)
-score_font = pygame.font.SysFont(main_font, 35)
-bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)
-title_font = pygame.font.SysFont("ocraextended", 40)
-controls_font = pygame.font.SysFont("ocraextended", 18)
+# play surface and next surface dimensions
+play_surface_size = play_surface_width, play_surface_height = SEGMENT_SIZE * 10, SEGMENT_SIZE * 20
+play_surface_left, play_surface_top = tls.center(screen_width, play_surface_width), \
+                                      tls.center(screen_height, play_surface_height)
+play_surface_right, play_surface_bottom = play_surface_left + play_surface_width, play_surface_top + play_surface_height
+right_margin = screen_width - play_surface_right
+# surface for displaying upcoming tetromino
+next_surface_size = next_surface_width, next_surface_height = SEGMENT_SIZE * 5, SEGMENT_SIZE * 6
+next_surface_pos = tls.center(right_margin, SEGMENT_SIZE * 6) + play_surface_right,\
+                   tls.center(screen_height, play_surface_height)
+next_banner_surface = banner_font.render("NEXT", True, (255, 255, 255))
+next_banner_pos = tls.center(SEGMENT_SIZE * 5, next_banner_surface.get_width()), 10
+# key instruction list for displaying
 keys = ["KEYS", "_______", "ESC: pause menu", "R ARROW: move right", "L ARROW: move left", "D: rotate right",
                 "A: rotate left", "S: fast drop", "SPACE: hard drop"]
-next_banner_surface = score_font.render("NEXT", True, (255, 255, 255))
-line_image1 = pygame.image.load("line_completed1.jpg")
+line_image1 = pygame.image.load("line_completed1.jpg")  # completed line animation
 line_image2 = pygame.image.load("line_completed2.jpg")
 
+# scoreboard rect sets the dimensions and locations of the scoreboard.
+scoreboard_rect = [tls.center(play_surface_left, SEGMENT_SIZE * 6), play_surface_top, (SEGMENT_SIZE * 6),
+                   (SEGMENT_SIZE * 16 + 10)]  # plus 10 is where the first banner is displayed
+scoreboard = Scoreboard(scoreboard_rect, [0, 1, 0, -10])  # scoreboard initializes a Scoreboard object.
+
 
 """
-scoreboard rect sets the dimensions and locations of the scoreboard. scoreboard initializes a Scoreboard object.
-gen_next sets the first next tetro. This starts the cycle of current and next tetro generation.
+This segment contains variables/constants/objects for the main menu
+________________________________________________________________________________________________________________________
 """
-scoreboard_rect = [((play_surface_left - SEGMENT_SIZE * 6) // 2), play_surface_top, (SEGMENT_SIZE * 6),
-                   (SEGMENT_SIZE * 16 + 10)]  # the plus 10 is just the offset determined by the banners
-scoreboard = Scoreboard(scoreboard_rect, [0, 1, 0, -10])
-gen_next()
-
-pause_surface = pygame.Surface((8 * SEGMENT_SIZE, 18 * SEGMENT_SIZE))
-button_left = (screen_width - 500) / 2  # gets the starting point of the button
-start_button = button.Button(screen, (button_left, 315),
-                             pygame.image.load("start_button1.jpg"), pygame.image.load("start_button2.jpg"))
-help_button = button.Button(screen, (button_left, 415),
-                            pygame.image.load("help_button1.jpg"), pygame.image.load("help_button2.jpg"))
-exit_button = button.Button(screen, (button_left, 515),
-                            pygame.image.load("exit_button1.jpg"), pygame.image.load("exit_button2.jpg"))
-resume_button = button.Button(pause_surface, (0, 0), pygame.image.load("resume_button1.jpg"),
-                              pygame.image.load("resume_button2.jpg"),
-                              ((screen_width - 8 * SEGMENT_SIZE) // 2, (screen_height - 18 * SEGMENT_SIZE) // 2))
-menu_button = button.Button(pause_surface, (0, 75), pygame.image.load("main_menu1.jpg"),
-                            pygame.image.load("main_menu2.jpg"),
-                            ((screen_width - 8 * SEGMENT_SIZE) // 2, (screen_height - 18 * SEGMENT_SIZE) // 2))
-title_surf = banner_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
-title_pos = (((screen_width - title_surf.get_width())/2), 150)
+title_surf = title_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
+title_pos = (tls.center(screen_width, title_surf.get_width()), 150)
 copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.0", True, color_dict["white"])
-copyrite_pos = (((screen_width - copyrite_surf.get_width()) / 2), 625)
+copyrite_pos = (tls.center(screen_width, copyrite_surf.get_width()), 625)
+menu_images = (pygame.image.load("menu_button1.jpg"), pygame.image.load("menu_button2.jpg"),
+               pygame.image.load("menu_button3.jpg"), pygame.image.load("menu_button4.jpg"),
+               pygame.image.load("menu_button5.jpg"), pygame.image.load("menu_button6.jpg"))
+button_left = tls.center(screen_width, 500)  # gets the left starint point of the button
+start_button = btn.Button(screen, (button_left, 315), menu_images[0], menu_images[1])
+help_button = btn.Button(screen, (button_left, 415), menu_images[2], menu_images[3])
+exit_button = btn.Button(screen, (button_left, 515), menu_images[4], menu_images[5])
+
+
+"""
+This segment contains variables/constants/objects used in the pause menu
+________________________________________________________________________________________________________________________
+"""
+pause_surface_size = pause_surface_width, pause_surface_height = SEGMENT_SIZE * 8, SEGMENT_SIZE * 18
+pause_surface = pygame.Surface(pause_surface_size)
+pause_images = (pygame.image.load("resume_button1.jpg"), pygame.image.load("resume_button2.jpg"),
+                pygame.image.load("main_menu1.jpg"), pygame.image.load("main_menu2.jpg"))
+resume_button = btn.Button(pause_surface, (0, 330), pause_images[0], pause_images[1],
+                           (tls.center(screen_width, pause_surface_width),
+                            tls.center(screen_height, pause_surface_height)))
+menu_button = btn.Button(pause_surface, (0, 430), pause_images[2], pause_images[3],
+                         (tls.center(screen_width, pause_surface_width),
+                          tls.center(screen_height, pause_surface_height)))
+
+
+"""
+This segment contains variables/constants/objects used in the help and info section
+________________________________________________________________________________________________________________________
+"""
+help_msg = "HELP & INFO"
+help_surf = banner_font.render(help_msg, True, (255, 255, 255))
+help_pos = (((screen_width - title_surf.get_width()) // 2), ((screen_height - title_surf.get_height()) // 2))
+
+"""
+Game state functions 
+________________________________________________________________________________________________________________________
+"""
 
 
 def start_menu():  # function for the main menu
+    clicked = False  # prevents inadvertent menu selections while holding mouse button down from other states
     running = True
     while running:
         for event in pygame.event.get():
@@ -622,21 +624,27 @@ def start_menu():  # function for the main menu
             elif event.type == pygame.KEYDOWN:  # button interaction handled below, these are keyboard shortcuts
                 if pygame.key.get_mods() & pygame.KMOD_SHIFT:  # checks if user is holding modifying button
                     if event.key == pygame.K_g:
+                        new_game()
+                        gen_next()
                         return "start"
                     elif event.key == pygame.K_h:
                         return "help and info"
                     elif event.key == pygame.K_x:
                         running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                clicked = True
 
         screen.blit(bg_img, (0, 0))
         screen.blit(title_surf, title_pos)
         screen.blit(copyrite_surf, copyrite_pos)
 
-        if start_button.update_button():  # displays start button and checks if user has clicked
+        if start_button.update_button() and clicked:  # displays start button and checks if user has clicked
+            new_game()
+            gen_next()
             return "start"  # when user clicks button
-        elif help_button.update_button():
+        elif help_button.update_button() and clicked:
             return "help and info"
-        elif exit_button.update_button():
+        elif exit_button.update_button() and clicked:
             running = False  # ends game loop
 
         pygame.display.flip()
@@ -787,16 +795,12 @@ def game_over():
 
     pygame.quit()
 
-"""This is a placeholder function"""
+
 def help_and_info():
     running = True
     screen.fill((0, 0, 0))
     while running:
-
-        title_msg = "HELP & INFO"
-        title_surf = banner_font.render(title_msg, True, (255, 255, 255))
-        title_pos = (((screen_width - title_surf.get_width()) // 2), ((screen_height - title_surf.get_height()) // 2))
-        screen.blit(title_surf, title_pos)
+        screen.blit(help_surf, help_pos)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -805,10 +809,8 @@ def help_and_info():
                 if event.key == pygame.K_ESCAPE:
                     game_state = "main menu"
                     return game_state
-
         pygame.display.flip()
-
-    pygame.quit()
+    return "exit"
 
 
 """

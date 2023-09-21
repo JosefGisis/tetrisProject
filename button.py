@@ -34,7 +34,6 @@ class Button:
             self.clicked = False
         mouse_posx, mouse_posy = pygame.mouse.get_pos()
         mouse_pos = mouse_posx - self.relative_pos[0], mouse_posy - self.relative_pos[1]
-        print(mouse_pos)
         if self.left <= mouse_pos[0] <= self.right and self.top <= mouse_pos[1] <= self.bottom:
             self.surface.blit(self.image2, (self.left, self.top))
             if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
