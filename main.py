@@ -771,6 +771,8 @@ def pause_menu():  # pause menu loop
         elif options_button.update_button():
             return "pause menu"
         elif restart_button.update_button():
+            new_game()
+            gen_next()
             return "start"
         elif quit_button.update_button():
             return "main menu"
