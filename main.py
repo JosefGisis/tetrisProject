@@ -588,17 +588,20 @@ exit_button = btn.Button(screen, (button_left, 530), menu_images[4], menu_images
 This segment contains variables/constants/objects used in the pause menu
 ________________________________________________________________________________________________________________________
 """
-pause_surface_size = pause_surface_width, pause_surface_height = SEGMENT_SIZE * 8, SEGMENT_SIZE * 18
-pause_surface = pygame.Surface(pause_surface_size)
-pause_surface_pos = tls.center(screen_width, pause_surface_width), tls.center(screen_height, pause_surface_height)
-pause_images = (pygame.image.load("resume_button1.jpg"), pygame.image.load("resume_button2.jpg"),
-                pygame.image.load("main_menu1.jpg"), pygame.image.load("main_menu2.jpg"))
-resume_button = btn.Button(pause_surface, (0, 330), pause_images[0], pause_images[1],
-                           (tls.center(screen_width, pause_surface_width),
-                            tls.center(screen_height, pause_surface_height)))
-menu_button = btn.Button(pause_surface, (0, 430), pause_images[2], pause_images[3],
-                         (tls.center(screen_width, pause_surface_width),
-                          tls.center(screen_height, pause_surface_height)))
+pause_surface_size = pause_surface_width, pause_surface_height = SEGMENT_SIZE * 9, SEGMENT_SIZE * 17
+pause_surface = pygame.Surface(pause_surface_size, pygame.SRCALPHA)
+pause_surface.set_alpha(125)
+pause_surface_left, pause_surface_top = tls.center(screen_width, pause_surface_width), \
+                                       tls.center(screen_height, pause_surface_height)
+pause_button_left = tls.center(screen_width, 288)
+pause_images = (pygame.image.load("pause_menu_buttons1.jpg"), pygame.image.load("pause_menu_buttons2.jpg"),
+                pygame.image.load("pause_menu_buttons3.jpg"), pygame.image.load("pause_menu_buttons4.jpg"),
+                pygame.image.load("pause_menu_buttons5.jpg"), pygame.image.load("pause_menu_buttons6.jpg"),
+                pygame.image.load("pause_menu_buttons7.jpg"), pygame.image.load("pause_menu_buttons8.jpg"))
+resume_button = btn.Button(screen, (pause_button_left, 210), pause_images[0], pause_images[1])
+options_button = btn.Button(screen, (pause_button_left, 310), pause_images[2], pause_images[3])
+restart_button = btn.Button(screen, (pause_button_left, 410), pause_images[4], pause_images[5])
+quit_button = btn.Button(screen, (pause_button_left, 510), pause_images[6], pause_images[7])
 
 
 """
@@ -616,7 +619,7 @@ ________________________________________________________________________________
 """
 
 
-def start_menu():  # function for the main menu
+def main_menu():  # function for the main menu
     clicked = False  # prevents inadvertent menu selections while holding mouse button down from other states
     running = True
     while running:
@@ -654,7 +657,7 @@ def start_menu():  # function for the main menu
 
 
 def start_game():  # main game loop functions
-    global prev_shift_time, prev_drop_time, game_over
+    global prev_shift_time, prev_drop_time, game_over, screen_capture
     running = True
     while running:
         clock.tick(30)
@@ -677,6 +680,7 @@ def start_game():  # main game loop functions
                         game_over = True  # ends game
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
+                            screen_capture = pygame.Surface.copy(screen)
                             game_state = "pause menu"  # switches to main menu
                             return game_state
                         elif event.key == pygame.K_RIGHT:
@@ -759,13 +763,17 @@ def pause_menu():  # pause menu loop
                 if event.key == pygame.K_ESCAPE:
                     return "start"
 
-
-        pause_surface.fill(color_dict["darker purple"])
+        pause_surface.fill(color_dict["white"])
+        screen.blit(screen_capture, (0, 0))
+        screen.blit(pause_surface, (pause_surface_left, pause_surface_top))
         if resume_button.update_button():
             return "start"
-        if menu_button.update_button():
+        elif options_button.update_button():
+            return "pause menu"
+        elif restart_button.update_button():
+            return "start"
+        elif quit_button.update_button():
             return "main menu"
-        screen.blit(pause_surface, pause_surface_pos)
         pygame.display.flip()
     return "exit"
 
@@ -810,7 +818,7 @@ a new function.
 game_state = "main menu"
 while True:
     if game_state == "main menu":
-        game_state = start_menu()
+        game_state = main_menu()
     elif game_state == "help and info":
         game_state = help_and_info()
     elif game_state == "start":
