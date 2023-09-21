@@ -590,6 +590,7 @@ ________________________________________________________________________________
 """
 pause_surface_size = pause_surface_width, pause_surface_height = SEGMENT_SIZE * 8, SEGMENT_SIZE * 18
 pause_surface = pygame.Surface(pause_surface_size)
+pause_surface_pos = tls.center(screen_width, pause_surface_width), tls.center(screen_height, pause_surface_height)
 pause_images = (pygame.image.load("resume_button1.jpg"), pygame.image.load("resume_button2.jpg"),
                 pygame.image.load("main_menu1.jpg"), pygame.image.load("main_menu2.jpg"))
 resume_button = btn.Button(pause_surface, (0, 330), pause_images[0], pause_images[1],
@@ -605,8 +606,9 @@ This segment contains variables/constants/objects used in the help and info sect
 ________________________________________________________________________________________________________________________
 """
 help_msg = "HELP & INFO"
-help_surf = banner_font.render(help_msg, True, (255, 255, 255))
-help_pos = (((screen_width - title_surf.get_width()) // 2), ((screen_height - title_surf.get_height()) // 2))
+help_surf = title_font.render(help_msg, True, (255, 255, 255))
+help_pos = tls.center(screen_width, help_surf.get_width()), tls.center(screen_height, help_surf.get_height())
+
 
 """
 Game state functions 
@@ -624,8 +626,8 @@ def start_menu():  # function for the main menu
             elif event.type == pygame.KEYDOWN:  # button interaction handled below, these are keyboard shortcuts
                 if pygame.key.get_mods() & pygame.KMOD_SHIFT:  # checks if user is holding modifying button
                     if event.key == pygame.K_g:
-                        new_game()
-                        gen_next()
+                        new_game()  # starts a new game
+                        gen_next()  # generates the next tetro starting the next, current ... next cascade
                         return "start"
                     elif event.key == pygame.K_h:
                         return "help and info"
@@ -639,7 +641,7 @@ def start_menu():  # function for the main menu
         screen.blit(copyrite_surf, copyrite_pos)
 
         if start_button.update_button() and clicked:  # displays start button and checks if user has clicked
-            new_game()
+            new_game()  # see event handler doc
             gen_next()
             return "start"  # when user clicks button
         elif help_button.update_button() and clicked:
@@ -657,36 +659,25 @@ def start_game():  # main game loop functions
     while running:
         clock.tick(30)
         if not game_over:
-            """
-            All the tetro pieces are displayed, as well as the surfaces. The pieces are first displayed on their 
-            respective surfaces, then the respective surfaces are displayed.
-            """
             screen.blit(bg_img, (0, 0))
             update_play_surface()  # function handles surface and play surface
-            display_next()
-            display_keys()
-            scoreboard.display_scoreboard()
+            display_next()  # display upcoming tetromino surface
+            display_keys()  # display key instructions
+            scoreboard.display_scoreboard()  # display scoreboard object
             pygame.display.flip()
             """
-            if dropped checks to see if the tetro has landed yet. It it has not, the program checks for user input. Else
-            the a new piece is generated. The else condition displays the next tetromino and assigns a new tetromino to
-            fall. The fall also checks if the user has cancelled the game.
+            if dropped checks to see if the tetro has landed yet by comparing dropped to grace period (drop is
+            incremented whenever the falling tetromino is blocked). If dropped does not equal or exceed grace period,
+            the program checks for user input and updates positions. 
             """
-            # TODO: create ESC event to handle user pauses
             if dropped < grace_period:
-                """
-                Game controls are subject to change. Currently controls are: key_right shifts tetro to the right,
-                key_left shifts the tetro to the left, d rotates the tetro clockwise, a rotates the tetro counterclock-
-                wise. s accelerates the tetro's descent, space instantly drops the tetro, and escape changes the game
-                state to the pause menu.
-                """
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        running = False
-                        game_over = True
+                        running = False  # breaks running loop
+                        game_over = True  # ends game
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
-                            game_state = "pause menu"
+                            game_state = "pause menu"  # switches to main menu
                             return game_state
                         elif event.key == pygame.K_RIGHT:
                             """
@@ -706,27 +697,24 @@ def start_game():  # main game loop functions
                         elif event.key == pygame.K_a:
                             ccw_rotation()
                         elif event.key == pygame.K_SPACE:
-                            hard_drop()
-
-                if pygame.time.get_ticks() - prev_drop_time >= drop_rate:
+                            hard_drop()  # instantly drops tetromino
+                """
+                Pygame's set_repeat function cannot be used here because some buttons do not have a hold down feature.
+                Instead, this program uses Pygame's get_ticks to compare times and mimics the set_repeat feature.
+                time_clicked tracks when the button was originally depressed. If enough time has elapsed, the tetromino
+                can be shifted. Each shift also requires that enough time has passed from its last shift (so it does
+                not instantly teleport pieces across the play surface).
+                """
+                if pygame.time.get_ticks() - prev_drop_time >= drop_rate:  # enough time passed to drop tetro again
                     shift_down()
-                    prev_drop_time = pygame.time.get_ticks()
+                    prev_drop_time = pygame.time.get_ticks()  # update last drop time
 
-                """
-                Pygame offers a key.set_repeat function but I could not use it because it does not differentiate between
-                different keys. Therefore, I need to mimic the set_repeat function in the following code. 
-                Pygame's get_pressed() function returns a list containing the current keys being depressed. The code 
-                below, checks if the right, left, or s keys are being depressed. The if loops create a delay and
-                interval effect for the keys by checking when the button has initially been depressed and by checking
-                when the tetro has previously moved.
-                """
-                pressed_keys = pygame.key.get_pressed()
-                if pressed_keys[pygame.K_RIGHT]:
+                pressed_keys = pygame.key.get_pressed()  # gets the state of all keys
+                if pressed_keys[pygame.K_RIGHT]:  # checks if user has pressed the right arrow key
                     """
-                    time_clicked_r is the time the right button had started being depressed and then checks the current
-                    time and then checks if it has exceeded the KEY_DELAY variable. The and expression evaluates how 
-                    much time has passed from the previous shift. If SHIFT_INTERVAL is exceeded, the tetro is moved and
-                    the previous shift time is reassigned.
+                    Checks if sufficient time has passed since the key was originally depressed and checks if enough 
+                    time has passed the piece was last shifted. If conditions are met, the piece is shifted and 
+                    the last shift time is updated.
                     """
                     if pygame.time.get_ticks() - time_clicked_r >= KEY_DELAY \
                             and pygame.time.get_ticks() - prev_shift_time >= SHIFT_INTERVAL:
@@ -740,27 +728,28 @@ def start_game():  # main game loop functions
                 if pressed_keys[pygame.K_s]:
                     if pygame.time.get_ticks() - time_clicked_s >= KEY_DELAY - 75 \
                             and pygame.time.get_ticks() - prev_drop_time >= SHIFT_INTERVAL - 20:
-                        """
-                        Shift down is passed a one millisecond argument to extend the grace period.
-                        """
-                        shift_down(3)
+                        shift_down(3)  # Shift down is passed a 3 millisecond argument to extend the grace period
                         prev_drop_time = pygame.time.get_ticks()
             else:
+                """
+                When dropped equals or exceeds grace period the a series of functions are called to generate a new
+                piece, update scores, check for filledl lines, etc.
+                """
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         running = False
-                check_pos()
-                line_animation()
-                scoreboard.update_score()
-                difficulty_level()
-                filled_lines_handler()
-                new_tetro()
+                check_pos()  # checks position of landed segments and assigns them to the correct group
+                line_animation()  # destroyed line animation for filled lines
+                scoreboard.update_score()  # updates score attributes
+                difficulty_level()  # increases difficulty when necessary
+                filled_lines_handler()  # empties filled rows and shifts other rows to their new position
+                new_tetro()  # generate a new tetro and new upcoming tetro
         else:
             new_game()
     pygame.quit()
 
 
-def pause_menu():
+def pause_menu():  # pause menu loop
     running = True
     while running:
         for event in pygame.event.get():
@@ -776,12 +765,12 @@ def pause_menu():
             return "start"
         if menu_button.update_button():
             return "main menu"
-        screen.blit(pause_surface, ((screen_width - 8 * SEGMENT_SIZE) // 2, (screen_height - 18 * SEGMENT_SIZE) // 2))
+        screen.blit(pause_surface, pause_surface_pos)
         pygame.display.flip()
     return "exit"
 
-"""This is a placeholder function"""
-def game_over():
+
+def game_over():  # game over loop
     running = True
     while running:
 
@@ -792,11 +781,10 @@ def game_over():
                 if event.key == pygame.K_ESCAPE:
                     game_state = "main menu"
                     return game_state
-
     pygame.quit()
 
 
-def help_and_info():
+def help_and_info():  # help and info state function
     running = True
     screen.fill((0, 0, 0))
     while running:
