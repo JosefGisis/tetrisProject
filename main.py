@@ -579,9 +579,9 @@ menu_images = (pygame.image.load("menu_button1.jpg"), pygame.image.load("menu_bu
                pygame.image.load("menu_button3.jpg"), pygame.image.load("menu_button4.jpg"),
                pygame.image.load("menu_button5.jpg"), pygame.image.load("menu_button6.jpg"))
 button_left = tls.center(screen_width, 500)  # gets the left starint point of the button
-start_button = btn.Button(screen, (button_left, 315), menu_images[0], menu_images[1])
-help_button = btn.Button(screen, (button_left, 415), menu_images[2], menu_images[3])
-exit_button = btn.Button(screen, (button_left, 515), menu_images[4], menu_images[5])
+start_button = btn.Button(screen, (button_left, 310), menu_images[0], menu_images[1])
+help_button = btn.Button(screen, (button_left, 420), menu_images[2], menu_images[3])
+exit_button = btn.Button(screen, (button_left, 530), menu_images[4], menu_images[5])
 
 
 """
