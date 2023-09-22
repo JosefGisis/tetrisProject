@@ -8,6 +8,7 @@ button's rect and returns true is conditions are met. Otherwise, the default but
 
 import pygame, sys
 pygame.init()
+screen = pygame.display.set_mode((1000, 800))
 
 
 def help():
@@ -39,3 +40,49 @@ class Button:
             if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
                 self.clicked = True
                 return True
+
+
+class WarningBox:
+    def __init__(self, surface, rect, message, buttons):
+        self.surface = surface
+        self.message = message
+        self.left, self.top, self.width, self.height = rect
+        self.box = pygame.Surface((self.width, self.height))
+        self.button1 = pygame.Surface((self.width // 6, self.height // 8))
+        self.button2 = pygame.Surface((self.width // 6, self.height // 8))
+        self.button1_left, self.button2_left, = (self.width // 12) * 3, (self.width // 12) * 6
+        self.button_top = (self.height // 8) * 5
+        self.title_font = pygame.font.SysFont("ocraextended", int(self.width / len(self.message) * 1.5))
+        self.button_font = pygame.font.SysFont("ocraextended", int(0.6 * self.button1.get_height()))
+        self.message_surf = self.title_font.render(self.message, True, (255, 255, 255))
+        self.button1_text_surf = self.button_font.render(buttons[0], True, (255, 255, 255))
+        self.button2_text_surf = self.button_font.render(buttons[1], True, (255, 255, 255))
+        self.message_left, self.message_top = (self.width - self.message_surf.get_width()) // 2, int(0.2 * self.height)
+        self.button1_text_left = (self.width // 6 - self.button1_text_surf.get_width()) // 2
+        self.button2_text_left = (self.width // 6 - self.button2_text_surf.get_width()) // 2
+        self.button_text_top = (self.height // 8 - self.button1_text_surf.get_height()) // 2
+
+    def update_box(self):
+        self.button1.fill((50, 0, 75))
+        self.button2.fill((50, 0, 75))
+        self.button1.blit(self.button1_text_surf, (self.button1_text_left, self.button_text_top))
+        self.button2.blit(self.button2_text_surf, (self.button2_text_left, self.button_text_top))
+        self.box.blit(self.message_surf, (self.message_left, self.message_top))
+        self.box.blit(self.button1, (self.button1_left, self.button_top))
+        self.box.blit(self.button2, (self.button2_left, self.button_top))
+        self.surface.blit(self.box, (self.left, self.top))
+
+
+exit_warning = WarningBox(screen, (0, 0, 800, 500), "RESTART GAME?", ("OK", "CANCEL"))
+
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    screen.fill((255, 255, 255))
+    exit_warning.update_box()
+    pygame.display.flip()
+
+pygame.quit()

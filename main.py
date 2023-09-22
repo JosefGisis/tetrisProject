@@ -780,7 +780,7 @@ def pause_menu():  # pause menu loop
     return "exit"
 
 
-def game_over():  # game over loop
+def gameover():  # game over loop
     running = True
     while running:
         for event in pygame.event.get():
@@ -789,7 +789,6 @@ def game_over():  # game over loop
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return "main menu"
-            screen.blit(screen_capture, (0, 0))
     return "main menu"
 
 
@@ -822,11 +821,13 @@ while True:
         game_state = main_menu()
     elif game_state == "help and info":
         game_state = help_and_info()
+    elif game_state == "loading":
+        game_state = loading()
     elif game_state == "start":
         game_state = start_game()
     elif game_state == "pause menu":
         game_state = pause_menu()
     elif game_state == "game over":
-        game_state = game_over()
+        game_state = gameover()
     elif game_state == "exit":
         pygame.quit()
