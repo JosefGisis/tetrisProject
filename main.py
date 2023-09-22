@@ -572,16 +572,16 @@ This segment contains variables/constants/objects for the main menu
 ________________________________________________________________________________________________________________________
 """
 title_surf = title_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
-title_pos = (tls.center(screen_width, title_surf.get_width()), 150)
+title_pos = (tls.center(screen_width, title_surf.get_width()), 110)
 copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.0", True, color_dict["white"])
-copyrite_pos = (tls.center(screen_width, copyrite_surf.get_width()), 625)
+copyrite_pos = (tls.center(screen_width, copyrite_surf.get_width()), 680)
 menu_images = (pygame.image.load("menu_button1.jpg"), pygame.image.load("menu_button2.jpg"),
                pygame.image.load("menu_button3.jpg"), pygame.image.load("menu_button4.jpg"),
                pygame.image.load("menu_button5.jpg"), pygame.image.load("menu_button6.jpg"))
 button_left = tls.center(screen_width, 500)  # gets the left starint point of the button
-start_button = btn.Button(screen, (button_left, 310), menu_images[0], menu_images[1])
+start_button = btn.Button(screen, (button_left, 290), menu_images[0], menu_images[1])
 help_button = btn.Button(screen, (button_left, 420), menu_images[2], menu_images[3])
-exit_button = btn.Button(screen, (button_left, 530), menu_images[4], menu_images[5])
+exit_button = btn.Button(screen, (button_left, 550), menu_images[4], menu_images[5])
 
 
 """
@@ -749,7 +749,7 @@ def start_game():  # main game loop functions
                 filled_lines_handler()  # empties filled rows and shifts other rows to their new position
                 new_tetro()  # generate a new tetro and new upcoming tetro
         else:
-            new_game()
+            return "game over"
     pygame.quit()
 
 
@@ -783,15 +783,14 @@ def pause_menu():  # pause menu loop
 def game_over():  # game over loop
     running = True
     while running:
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    game_state = "main menu"
-                    return game_state
-    pygame.quit()
+                    return "main menu"
+            screen.blit(screen_capture, (0, 0))
+    return "main menu"
 
 
 def help_and_info():  # help and info state function
