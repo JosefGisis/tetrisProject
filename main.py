@@ -5,7 +5,7 @@ structures each tetromino shape, and surface (regarding segments) refers to imag
 their appearance and give them colors.
 """
 import sys, pygame, random
-import button as btn
+import surfaces as btn
 import tools as tls
 
 
@@ -473,7 +473,7 @@ title_font = pygame.font.SysFont(main_font, 80)  # large font for titles
 score_font = pygame.font.SysFont(main_font, 40)  # font for game scores
 banner_font = pygame.font.SysFont(main_font, 35)  # banner font
 keys_font = pygame.font.SysFont(main_font, 18)  # font for keys instructions
-bg_img = pygame.transform.scale(pygame.image.load("bg.jpg"), display_size)  # bg image used throughout the game
+bg_img = pygame.transform.scale(pygame.image.load("images/bg.jpg"), display_size)  # bg image used throughout the game
 
 
 """
@@ -516,10 +516,10 @@ Z_PIECE = [[1, 1, 0],
 
 # parallel lists that match tetris shapes with their correct surface (each surface has a specified color)
 TETRO_LETTERS = (I_PIECE, J_PIECE, L_PIECE, T_PIECE, O_PIECE, S_PIECE, Z_PIECE)
-TETRO_SURFACES = (pygame.image.load("teal_segment.jpg"), pygame.image.load("blue_segment.jpg"),
-                  pygame.image.load("orange_segment.jpg"), pygame.image.load("purple_segment.jpg"),
-                  pygame.image.load("magenta_segment.jpg"), pygame.image.load("green_segment.jpg"),
-                  pygame.image.load("red_segment.jpg"))
+TETRO_SURFACES = (pygame.image.load("images/teal_segment.jpg"), pygame.image.load("images/blue_segment.jpg"),
+                  pygame.image.load("images/orange_segment.jpg"), pygame.image.load("images/purple_segment.jpg"),
+                  pygame.image.load("images/magenta_segment.jpg"), pygame.image.load("images/green_segment.jpg"),
+                  pygame.image.load("images/red_segment.jpg"))
 current_tetro = pygame.sprite.Group()  # falling tetromino group
 next_tetro = pygame.sprite.Group()  # upcoming tetromino group
 
@@ -558,8 +558,8 @@ next_banner_pos = tls.center(SEGMENT_SIZE * 5, next_banner_surface.get_width()),
 # key instruction list for displaying
 keys = ["KEYS", "_______", "ESC: pause menu", "R ARROW: move right", "L ARROW: move left", "D: rotate right",
                 "A: rotate left", "S: fast drop", "SPACE: hard drop"]
-line_image1 = pygame.image.load("line_completed1.jpg")  # completed line animation
-line_image2 = pygame.image.load("line_completed2.jpg")
+line_image1 = pygame.image.load("images/line_completed1.jpg")  # completed line animation
+line_image2 = pygame.image.load("images/line_completed2.jpg")
 
 # scoreboard rect sets the dimensions and locations of the scoreboard.
 scoreboard_rect = [tls.center(play_surface_left, SEGMENT_SIZE * 6), play_surface_top, (SEGMENT_SIZE * 6),
@@ -575,13 +575,13 @@ title_surf = title_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
 title_pos = (tls.center(screen_width, title_surf.get_width()), 110)
 copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.0", True, color_dict["white"])
 copyrite_pos = (tls.center(screen_width, copyrite_surf.get_width()), 680)
-menu_images = (pygame.image.load("menu_button1.jpg"), pygame.image.load("menu_button2.jpg"),
-               pygame.image.load("menu_button3.jpg"), pygame.image.load("menu_button4.jpg"),
-               pygame.image.load("menu_button5.jpg"), pygame.image.load("menu_button6.jpg"))
+menu_imgs = (pygame.image.load("images/menu_button1.jpg"), pygame.image.load("images/menu_button2.jpg"),
+             pygame.image.load("images/menu_button3.jpg"), pygame.image.load("images/menu_button4.jpg"),
+             pygame.image.load("images/menu_button5.jpg"), pygame.image.load("images/menu_button6.jpg"))
 button_left = tls.center(screen_width, 500)  # gets the left starint point of the button
-start_button = btn.Button(screen, (button_left, 290), menu_images[0], menu_images[1])
-help_button = btn.Button(screen, (button_left, 420), menu_images[2], menu_images[3])
-exit_button = btn.Button(screen, (button_left, 550), menu_images[4], menu_images[5])
+start_button = btn.Button(screen, (button_left, 290), menu_imgs[0], menu_imgs[1])
+help_button = btn.Button(screen, (button_left, 420), menu_imgs[2], menu_imgs[3])
+exit_button = btn.Button(screen, (button_left, 550), menu_imgs[4], menu_imgs[5])
 
 
 """
@@ -594,14 +594,14 @@ pause_surface.set_alpha(125)
 pause_surface_left, pause_surface_top = tls.center(screen_width, pause_surface_width), \
                                        tls.center(screen_height, pause_surface_height)
 pause_button_left = tls.center(screen_width, 288)
-pause_images = (pygame.image.load("pause_menu_buttons1.jpg"), pygame.image.load("pause_menu_buttons2.jpg"),
-                pygame.image.load("pause_menu_buttons3.jpg"), pygame.image.load("pause_menu_buttons4.jpg"),
-                pygame.image.load("pause_menu_buttons5.jpg"), pygame.image.load("pause_menu_buttons6.jpg"),
-                pygame.image.load("pause_menu_buttons7.jpg"), pygame.image.load("pause_menu_buttons8.jpg"))
-resume_button = btn.Button(screen, (pause_button_left, 210), pause_images[0], pause_images[1])
-options_button = btn.Button(screen, (pause_button_left, 310), pause_images[2], pause_images[3])
-restart_button = btn.Button(screen, (pause_button_left, 410), pause_images[4], pause_images[5])
-quit_button = btn.Button(screen, (pause_button_left, 510), pause_images[6], pause_images[7])
+pause_imgs = (pygame.image.load("images/pause_menu_buttons1.jpg"), pygame.image.load("images/pause_menu_buttons2.jpg"),
+              pygame.image.load("images/pause_menu_buttons3.jpg"), pygame.image.load("images/pause_menu_buttons4.jpg"),
+              pygame.image.load("images/pause_menu_buttons5.jpg"), pygame.image.load("images/pause_menu_buttons6.jpg"),
+              pygame.image.load("images/pause_menu_buttons7.jpg"), pygame.image.load("images/pause_menu_buttons8.jpg"))
+resume_button = btn.Button(screen, (pause_button_left, 210), pause_imgs[0], pause_imgs[1])
+options_button = btn.Button(screen, (pause_button_left, 310), pause_imgs[2], pause_imgs[3])
+restart_button = btn.Button(screen, (pause_button_left, 410), pause_imgs[4], pause_imgs[5])
+quit_button = btn.Button(screen, (pause_button_left, 510), pause_imgs[6], pause_imgs[7])
 
 
 """
