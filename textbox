@@ -1,0 +1,49 @@
+HOW TO PLAY
+_____________
+
+>  Game objective: earn points to get a new high score! a a a a a a a a a a a a a
+
+>  Guide falling tetrominos by shifting them right or left of by rotating them clockwise or counterclockwise.
+
+>  Instantly drop falling tetromino by performing a hard drop or speed up its descent by performing a fast drop.
+
+>  Get 10 points for every dropped piece.
+
+>  Clear space by completing rows.
+
+>  Get 100 points for completing 1 row, 300 points for completing 2 rows, 500 points for completing 3 rows, and 700 points for completing 4 rows (AKA getting a Tetris).
+
+>  The game is over once there is no longer any room to drop the tetromino and it exceeds the top of the play surface.
+
+>  Good luck!
+
+
+CONTROLS
+__________
+
+ESCAPE - pause menu
+
+RIGHT ARROW - shift right
+
+LEFT ARROW - shift left
+
+D KEY - rotate right
+
+A KEY - rotate left
+
+S KEY - fast drop
+
+SPACE - hard drop
+
+
+GAME TIPS
+___________
+
+
+This is the code for my first official Python project. It is a bare-bones tetris style game.
+- Josef Gisis 9/8/2023
+
+Surface images for tetris pieces and destroyed lines created by Josef Gisis
+
+Background image designed by rawpixel.com / Freepik
+HOW TO PLAY

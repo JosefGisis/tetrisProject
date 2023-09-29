@@ -6,11 +6,11 @@ Use Surfaces.info() to get information.
 # TODO: add feature that checks if the mouse has gone of the screen surface
 import pygame
 pygame.init()
-# screen = pygame.display.set_mode((1000, 800))
+screen = pygame.display.set_mode((1000, 800))
 
 
 def info():
-    print("\nButton(surface, location, image1, image2, relative_pos=(0, 0)"
+    print("\nButton(self, surface, location, image1, image2, relative_pos=(0, 0)"
           "\n> surface parameter: blitting surface for Button object."
           "\n> image1 and image2 parameter: default image and hovering image."
           "\n> relative_pos parameter: should equal surface left and right for mouse location checking."
@@ -19,7 +19,13 @@ def info():
           "\n\nWarningBox(self, surface, rect, message)"
           "\nWarningBox.display_box(): displays warning box."
           "\nWarningBox.button1_rect(): returns the location and dimensions for an optional button (one of two)."
-          "\nWarningBox.button2_rect(): returns the location and dimensions for an optional button (two of two).")
+          "\nWarningBox.button2_rect(): returns the location and dimensions for an optional button (two of two)."
+          "\n\nTextBox(self, surface, text, rect)"
+          "\n> text parameter: takes text for display (preferably from a text file)."
+          "\nTextBox.layout_text(): sets up text layout."
+          "\nTextBox.update_box(): checks for user input and displays text."
+          "\nTextBox.scroll(self, speed): allows other user inputs to scroll through text."
+          "\n> speed parameter: set custom scroll speed (set positive or negative).")
 
 
 """
@@ -127,24 +133,137 @@ class WarningBox:  # warning dialogue box class
 
 
 """
-exit_warning = WarningBox(screen, (800, 300, 500, 300), "QUIT GAME?")
-# using exit warning box to determine location and dimensions of buttons
-ok_btn = TextButton(exit_warning.box, exit_warning.button1_rect(), "MAYBE?", (exit_warning.left, exit_warning.top))
-cancel_btn = TextButton(exit_warning.box, exit_warning.button2_rect(), "CANCEL", (exit_warning.left, exit_warning.top))
+This is a textbox class. It takes a text (preferably through a text files) and displays it in the text box. If the
+text size exceeds the size of the window, the text becomes scrollable. 
+"""
 
-print(isinstance(exit_warning, WarningBox))
+
+class TextBox:
+    def __init__(self, surface, text, rect):
+        self.surface = surface
+        self.text = text
+        self.text_top = 20  # text size (controls text movement and boundaries)
+        self.word_surfs, self.word_pos = [], []  # list of word objects and word object locations
+        self.font = pygame.font.Font(None, 30)
+        # surface attributes
+        (self.left, self.top, self.width, self.height) = rect
+        self.text_surface = pygame.Surface((self.width, self.height))
+        # the following variables control the scroll bar attributes and scrolling behaviour
+        self.scroll_range = self.text_height = self.height - 40  # text height defaults to scroll range
+        (self.scroll_left, self.scroll_top, self.scroll_height) = (self.width - 20, 20, self.height - 40)
+        self.holding_scroll = False
+        # by default the scroll ratio is 1 (meaning the text is the same size as the scroll range)
+        self.scroll_ratio = self.scroll_range // self.text_height
+        self.clicked = self.in_range = False
+        self.layout_text()  # layout text function
+
+        """
+        Laying out text is a relatively large task so it is given its own function. Once the text is laid out, the
+        scrollbar height and scroll ratio are adjusted. The text surface is adjusted to ensure it is a whole multiple
+        of the surface area (see below).   
+        """
+
+    def layout_text(self):
+        x_pos, y_pos = 20, 0  # starting position for text
+        lines = self.text.split("\n")
+        for line in lines:
+            words = line.split(" ")  # seperate line by spaces, yielding individual words
+            for word in words:
+                word_surf = self.font.render(word, True, (255, 255, 255))
+                if word_surf.get_width() + x_pos >= (self.scroll_left - 10):  # checks if lines width exceeds surface width
+                    y_pos += word_surf.get_height() + 10  # moved text a line down
+                    x_pos = 20  # sets text back to its leftmost position
+                self.word_surfs.append(word_surf)  # adds word to word list
+                self.word_pos.append((x_pos, y_pos))  # adds words location to parallel array
+                x_pos += word_surf.get_width() + 10  # spaces words apart
+            y_pos += 30
+            x_pos = 20
+        self.text_height = y_pos + 20  # assigns text height
+        # the following code ensures text height is evenly divisible by height of scroll range
+        if self.text_height % self.scroll_range != 0:
+            self.text_height += self.scroll_range - (self.text_height % self.scroll_range)  # next evenly divisible
+        self.scroll_ratio = self.text_height // self.scroll_range  # sets scroll ratio
+        self.scroll_height = self.scroll_range // self.scroll_ratio  # resizes scroll bar based on scroll ratio
+
+        """
+        This function checks for user interaction with the scrollbar and displays the text accordingly. The 
+        scroll bar can be moved once it is selected even if the mouse is not above the bar.
+        """
+
+    def update_box(self):
+        # checks if player has released mouse button and gets current position for later comparison
+        if not pygame.mouse.get_pressed()[0]:
+            self.clicked = False
+            self.in_range = False
+            pygame.mouse.get_rel()
+            self.holding_scroll = False  # player has released hold
+        # gets relative position of mouse
+        mouse_xpos, mouse_ypos = pygame.mouse.get_pos()
+        mouse_pos = mouse_xpos - self.left, mouse_ypos - self.top
+        # checks if user hovers over buttons and grabs hold of scroll bar
+        if (self.scroll_left - 10) <= mouse_pos[0] <= (self.scroll_left + 20):
+            if 20 <= mouse_pos[1] <= (self.height - 20):
+                if self.scroll_top <= mouse_pos[1] <= (self.scroll_top + self.scroll_height):
+                    if pygame.mouse.get_pressed()[0] and not self.clicked or self.in_range:
+                        self.in_range = False
+                        self.clicked = True
+                        self.holding_scroll = True
+                else:
+                    if pygame.mouse.get_pressed()[0] and not self.clicked:
+                        self.in_range = True
+                        dif = mouse_pos[1] - self.scroll_top - (self.scroll_height // 2)
+                        self.scroll(dif)
+        # while holding scroll bar and hovering over scroll range
+        if self.holding_scroll and 20 <= mouse_pos[1] <= (self.height - 20):
+            difference = pygame.mouse.get_rel()[1]
+            self.scroll(difference)
+        self.display_box()
+        if pygame.mouse.get_pressed()[0]:
+            self.clicked = True
+
+    def display_box(self):
+        self.text_surface.fill((40, 40, 40))
+        for i in range(len(self.word_surfs)):
+            self.text_surface.blit(self.word_surfs[i], (self.word_pos[i][0], self.word_pos[i][1] + self.text_top))
+        pygame.draw.rect(self.text_surface, (200, 200, 200),
+                         (self.scroll_left, self.scroll_top, 10, self.scroll_height))
+        self.surface.blit(self.text_surface, (self.left, self.top))
+
+    def scroll(self, speed):
+        if speed > 0 and (self.scroll_top + self.scroll_height) < (self.height - 20):
+            if (speed + self.scroll_top + self.scroll_height) > (self.height - 20):
+                speed = (self.height - 20) - (self.scroll_top + self.scroll_height)
+            self.scroll_top += speed
+            self.text_top -= speed * self.scroll_ratio
+        elif speed < 0 and self.scroll_top >= 20:
+            if (self.scroll_top + speed) < 20:
+                speed = 20 - self.scroll_top
+            self.scroll_top += speed
+            self.text_top -= speed * self.scroll_ratio
+
+info()
+with open("textbox", "r+") as f:
+    message = f.read()
+
+text_box = TextBox(screen, message, (100, 100, 800, 600))
 
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 4:
+                text_box.scroll(-10)
+            elif event.button == 5:
+                text_box.scroll(10)
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                text_box.scroll(12)
+            elif event.key == pygame.K_UP:
+                text_box.scroll(-12)
     screen.fill((255, 255, 255))
-    exit_warning.display_box()
-    if ok_btn.update_button():
-        running = False
-    cancel_btn.update_button()
+    text_box.update_box()
     pygame.display.flip()
 
 pygame.quit()
-"""
