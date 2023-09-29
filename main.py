@@ -608,10 +608,20 @@ quit_button = btn.Button(screen, (pause_button_left, 510), pause_imgs[6], pause_
 This segment contains variables/constants/objects used in the help and info section
 ________________________________________________________________________________________________________________________
 """
-help_msg = "HELP & INFO"
-help_surf = title_font.render(help_msg, True, (255, 255, 255))
-help_pos = tls.center(screen_width, help_surf.get_width()), tls.center(screen_height, help_surf.get_height())
-
+help_border = pygame.Surface((screen_width - 120, screen_height - 120))
+help_border_left, help_border_top = tls.center(screen_width, screen_width - 120), \
+                                    tls.center(screen_height, screen_height - 120)
+help_surf = banner_font.render("HELP AND INFORMATION", True, (255, 255, 255))
+help_surf_pos = (tls.center(screen_width, help_surf.get_width()), help_border_top + 10)
+with open("textbox", "r+") as f:
+    text = f.read()
+info_box_rect = (tls.center(screen_width, screen_width - 160), tls.center(screen_height, screen_height - 200) + 20,
+                 screen_width - 160, screen_height - 200)
+info_box = btn.TextBox(screen, text, info_box_rect)
+back_button = btn.TextButton(screen, (help_border_left + 20, help_border_top + 10, 150, 40),
+                             "<< BACK", color_dict["darker purple"])
+strt_button = btn.TextButton(screen, ((help_border_left + screen_width - 290), help_border_top + 10, 150, 40),
+                             "START >>", color_dict["darker purple"])
 
 """
 Game state functions 
@@ -620,6 +630,7 @@ ________________________________________________________________________________
 
 
 def main_menu():  # function for the main menu
+    screen.blit(bg_img,(0, 0))
     clicked = False  # prevents inadvertent menu selections while holding mouse button down from other states
     running = True
     while running:
@@ -639,7 +650,6 @@ def main_menu():  # function for the main menu
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 clicked = True
 
-        screen.blit(bg_img, (0, 0))
         screen.blit(title_surf, title_pos)
         screen.blit(copyrite_surf, copyrite_pos)
 
@@ -793,18 +803,43 @@ def gameover():  # game over loop
 
 
 def help_and_info():  # help and info state function
+    screen.blit(bg_img, (0, 0))
     running = True
-    screen.fill((0, 0, 0))
     while running:
-        screen.blit(help_surf, help_pos)
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 4:
+                    info_box.scroll(-5)
+                elif event.button == 5:
+                    info_box.scroll(5)
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    game_state = "main menu"
-                    return game_state
+                    info_box.text_top = 20
+                    info_box.scroll_top = 20
+                    return "main menu"
+                elif event.key == pygame.K_DOWN:
+                    info_box.scroll(12)
+                elif event.key == pygame.K_UP:
+                    info_box.scroll(-12)
+                if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                    if event.key == pygame.K_g:
+                        new_game()
+                        gen_next()
+                        return "start"
+
+        screen.blit(help_border, (help_border_left, help_border_top))
+        screen.blit(help_surf, help_surf_pos)
+        info_box.update_box()
+        if back_button.update_button():
+            info_box.text_top = 20
+            info_box.scroll_top = 20
+            return "main menu"
+        elif strt_button.update_button():
+            new_game()
+            gen_next()
+            return "start"
         pygame.display.flip()
     return "exit"
 

@@ -55,6 +55,8 @@ class Button:
             if pygame.mouse.get_pressed()[0] and not self.clicked:
                 self.clicked = True
                 return True
+        if pygame.mouse.get_pressed()[0]:
+            self.clicked = True
 
 
 """
@@ -66,11 +68,13 @@ button's rect and returns true if conditions are met.
 
 
 class TextButton:
-    def __init__(self, surface, rect, text, relative_pos=(0, 0)):
+    def __init__(self, surface, rect, text, color, relative_pos=(0, 0)):
         self.surface = surface
         self.left, self.top, self.width, self.height = rect
         self.right, self.bottom = self.left + self.width, self.top + self.height
         self.button_surf = pygame.Surface((self.width, self.height))
+        self.color1 = color
+        self.color2 = tuple(rgb + 25 for rgb in self.color1)
         self.relative_pos = relative_pos
         self.clicked = False
 
@@ -85,14 +89,16 @@ class TextButton:
         mouse_posx, mouse_posy = pygame.mouse.get_pos()
         mouse_pos = mouse_posx - self.relative_pos[0], mouse_posy - self.relative_pos[1]
         if self.left <= mouse_pos[0] <= self.right and self.top <= mouse_pos[1] <= self.bottom:
-            self.button_surf.fill((75, 25, 100))
+            self.button_surf.fill((self.color2))
             if pygame.mouse.get_pressed()[0] and not self.clicked:
                 self.clicked = True
                 return True
         else:
-            self.button_surf.fill((50, 0, 75))
+            self.button_surf.fill((self.color1))
         self.button_surf.blit(self.text_surf, (self.text_left, self.text_top))
         self.surface.blit(self.button_surf, (self.left, self.top))
+        if pygame.mouse.get_pressed()[0]:
+            self.clicked = True
 
 
 class WarningBox:  # warning dialogue box class
