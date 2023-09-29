@@ -9,38 +9,18 @@ import surfaces as btn
 import tools as tls
 
 
-class Scoreboard():  # this is the scoreboard object that displays and tracks scores
-    def __init__(self, rect, score):  # takes the dimensions and locations and scores and creates a scoreboard object
-        self.left, self.top, self.width, self.height = rect
-        self.highscore, self.level, self.lines, self.score = score  # assigns scores
-        self.points = (0, 100, 300, 500, 700)
-        self.banners = ("HIGHSCORE:", "LEVEL:", "LINES:", "SCORE:")  # displayed banners
-        self.surface = pygame.Surface((self.width, self.height))
+class Score:  # this is the scoreboard object that tracks scores
+    def __init__(self, banner_list, score_list):
+        self.score_list = score_list  # assigns scores
+        self.banner_list = banner_list  # displayed banners
+        self.highscore_banner = "HIGHSCORE:"
+        self.highscore = 0
 
-    def update_score(self):
-        self.score += 10  # the player gets 10 points everytime a piece is dropped
-        filled_lines = get_lines()
-        self.score += self.points[len(filled_lines)]  # checks filled lines to see how points player should receive
-        self.lines += len(filled_lines)
+    def get_highscore(self, file):
+        pass
 
-    def reset_score(self, score):  # resets the scoreboard
-        self.highscore, self.level, self.lines, self.score = score
-
-    def display_scoreboard(self):
-        """
-        This function creates a scoreboard surface and displays score banners and scores. The function determines the
-        location of each score by iterating through a banner list, creating the banner and score surface, and blitting
-        those onto the scoreboard.
-        :return:
-        """
-        self.surface = pygame.Surface((self.width, self.height))  # creates new surface to clear previous scoreboard
-        scores = (self.highscore, self.level, self.lines, self.score)
-        for index, banner in enumerate(self.banners):
-            banner_surface = banner_font.render(banner, True, (255, 255, 255))
-            score_surface = score_font.render(str(scores[index]), True, (175, 100, 255))
-            self.surface.blit(banner_surface, (10, ((index * 4 * SEGMENT_SIZE) + 10)))  # text is 10 pixels from border
-            self.surface.blit(score_surface, (10, ((2 * SEGMENT_SIZE) + (index * 4 * SEGMENT_SIZE) + 10)))
-        screen.blit(self.surface, (self.left, self.top))
+    def reset_score(self, score_list):  # resets the scoreboard
+        self.score_list = score_list
 
 
 """
@@ -70,7 +50,7 @@ def new_game():
     current_tetro.empty()
     dropped = grace_period = 30
     drop_rate = 250
-    scoreboard.reset_score([0, 1, 0, -10])
+    scores.reset_score([1, 0, -10])
     for row in dropped_segments:
         row.empty()  # erases all the segments on the play surface
     gen_next()  # starts the next, current, next ... cycle
@@ -169,12 +149,20 @@ def get_lines():
     return[row_index for row_index, row in enumerate(dropped_segments) if len(row) == 10]
 
 
+def update_score():
+    points = (0, 100, 300, 500, 700)
+    scores.score_list[2] += 10  # the player gets 10 points everytime a piece is dropped
+    filled_lines = get_lines()
+    scores.score_list[2] += points[len(filled_lines)]  # checks filled lines to see how points player should receive
+    scores.score_list[1] += len(filled_lines)
+
+
 def difficulty_level():  # this function checks if the game difficulty should be increased
     global drop_rate, grace_period
-    if scoreboard.level < scoreboard.lines // 10 + 1:  # has there been a change in the level
+    if scores.score_list[0] < scores.score_list[1] // 10 + 1:  # has there been a change in the level
         drop_rate -= 20  # increase drop speed
         grace_period += 5  # proportionally increase grace period
-        scoreboard.level = scoreboard.lines // 10 + 1
+        scores.score_list[0] = scores.score_list[1] // 10 + 1
 
 
 def line_animation():  # temporary function
@@ -421,7 +409,7 @@ def ccw_rotation():
 
 
 def update_play_surface():
-    play_surface = pygame.Surface(play_surface_size)
+    play_surface.fill(color_dict["black"])
     current_tetro.draw(play_surface)  # uses sprite group to draw the current tetromino
     for row in dropped_segments:
         row.draw(play_surface)  # draws all the fallen pieces
@@ -432,8 +420,26 @@ def update_play_surface():
     screen.blit(play_surface, (play_surface_left, play_surface_top))
 
 
+def display_scoreboard():
+    """
+    This function creates a scoreboard surface and displays score banners and scores. The function determines the
+    location of each score by iterating through a banner list, creating the banner and score surface, and blitting
+    those onto the scoreboard.
+    :return:
+    """
+    scoreboard_surf.fill(color_dict["black"])
+    score_list = (scores.highscore, scores.score_list[0], scores.score_list[1], scores.score_list[2])
+    banner_list = (scores.highscore_banner, scores.banner_list[0], scores.banner_list[1], scores.banner_list[2])
+    for index, banner in enumerate(banner_list):
+        banner_surface = banner_font.render((banner), True, (255, 255, 255))
+        score_surface = score_font.render(str(score_list[index]), True, (175, 100, 255))
+        scoreboard_surf.blit(banner_surface, (10, ((index * 4 * SEGMENT_SIZE) + 10)))  # text is 10 pixels from border
+        scoreboard_surf.blit(score_surface, (10, ((2 * SEGMENT_SIZE) + (index * 4 * SEGMENT_SIZE) + 10)))
+    screen.blit(scoreboard_surf, scoreboard_pos)
+
+
 def display_next():
-    next_tetro_surface = pygame.Surface(next_surface_size)
+    next_tetro_surface.fill(color_dict["black"])
     next_tetro.draw(next_tetro_surface)  # draw the next tetro onto the next tetro surface
     next_tetro_surface.blit(next_banner_surface, next_banner_pos)
     screen.blit(next_tetro_surface, next_surface_pos)
@@ -449,7 +455,7 @@ def display_keys():
 
 
 """
-decelerations
+declarations
 ________________________________________________________________________________________________________________________
 """
 
@@ -545,12 +551,14 @@ drop_rate = 250  # controls tetromino drop rate and decreases with difficulty
 
 # play surface and next surface dimensions
 play_surface_size = play_surface_width, play_surface_height = SEGMENT_SIZE * 10, SEGMENT_SIZE * 20
+play_surface = pygame.Surface(play_surface_size)
 play_surface_left, play_surface_top = tls.center(screen_width, play_surface_width), \
                                       tls.center(screen_height, play_surface_height)
 play_surface_right, play_surface_bottom = play_surface_left + play_surface_width, play_surface_top + play_surface_height
 right_margin = screen_width - play_surface_right
 # surface for displaying upcoming tetromino
 next_surface_size = next_surface_width, next_surface_height = SEGMENT_SIZE * 5, SEGMENT_SIZE * 6
+next_tetro_surface = pygame.Surface(next_surface_size)
 next_surface_pos = tls.center(right_margin, SEGMENT_SIZE * 6) + play_surface_right,\
                    tls.center(screen_height, play_surface_height)
 next_banner_surface = banner_font.render("NEXT", True, (255, 255, 255))
@@ -562,9 +570,9 @@ line_image1 = pygame.image.load("images/line_completed1.jpg")  # completed line 
 line_image2 = pygame.image.load("images/line_completed2.jpg")
 
 # scoreboard rect sets the dimensions and locations of the scoreboard.
-scoreboard_rect = [tls.center(play_surface_left, SEGMENT_SIZE * 6), play_surface_top, (SEGMENT_SIZE * 6),
-                   (SEGMENT_SIZE * 16 + 10)]  # plus 10 is where the first banner is displayed
-scoreboard = Scoreboard(scoreboard_rect, [0, 1, 0, -10])  # scoreboard initializes a Scoreboard object.
+scoreboard_surf = pygame.Surface((SEGMENT_SIZE * 6, SEGMENT_SIZE * 16 + 10))
+scoreboard_pos = (tls.center(play_surface_left, SEGMENT_SIZE * 6), play_surface_top)
+scores = Score(("LEVEL:", "LINES:", "SCORE:"), [1, 0, -10])  # scoreboard initializes a Scoreboard object.
 
 
 """
@@ -619,9 +627,9 @@ info_box_rect = (tls.center(screen_width, screen_width - 160), tls.center(screen
                  screen_width - 160, screen_height - 200)
 info_box = btn.TextBox(screen, text, info_box_rect)
 back_button = btn.TextButton(screen, (help_border_left + 20, help_border_top + 10, 150, 40),
-                             "<< BACK", color_dict["darker purple"])
+                             "<< BACK", (20, 20, 20))
 strt_button = btn.TextButton(screen, ((help_border_left + screen_width - 290), help_border_top + 10, 150, 40),
-                             "START >>", color_dict["darker purple"])
+                             "START >>", (20, 20, 20))
 
 """
 Game state functions 
@@ -676,7 +684,7 @@ def start_game():  # main game loop functions
             update_play_surface()  # function handles surface and play surface
             display_next()  # display upcoming tetromino surface
             display_keys()  # display key instructions
-            scoreboard.display_scoreboard()  # display scoreboard object
+            display_scoreboard()  # display scoreboard object
             pygame.display.flip()
             """
             if dropped checks to see if the tetro has landed yet by comparing dropped to grace period (drop is
@@ -754,7 +762,7 @@ def start_game():  # main game loop functions
                         running = False
                 check_pos()  # checks position of landed segments and assigns them to the correct group
                 line_animation()  # destroyed line animation for filled lines
-                scoreboard.update_score()  # updates score attributes
+                update_score()  # updates score attributes
                 difficulty_level()  # increases difficulty when necessary
                 filled_lines_handler()  # empties filled rows and shifts other rows to their new position
                 new_tetro()  # generate a new tetro and new upcoming tetro
@@ -856,8 +864,6 @@ while True:
         game_state = main_menu()
     elif game_state == "help and info":
         game_state = help_and_info()
-    elif game_state == "loading":
-        game_state = loading()
     elif game_state == "start":
         game_state = start_game()
     elif game_state == "pause menu":
