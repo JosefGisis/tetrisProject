@@ -1,7 +1,7 @@
 HOW TO PLAY
 _____________
 
->  Game objective: earn points to get a new high score! a a a a a a a a a a a a a
+>  Game objective: earn points to get a new high score!
 
 >  Guide falling tetrominos by shifting them right or left of by rotating them clockwise or counterclockwise.
 
@@ -36,9 +36,24 @@ S KEY - fast drop
 SPACE - hard drop
 
 
-GAME TIPS
-___________
+GAMEPLAY TIPS
+_______________
 
+>  Keep low: try to place tetrominos as flat as possible (e.g. try not to place an i piece vertically unless it is filling a gap). The lower the stack, the further away you will be from the top of the play surface, and the more time you will have to move.
+
+>  Keep a close eye on the upcoming tetromino. The next tetromino will help you decide where to place the current tetromino.
+
+>  Game difficulty increases based on the number of lines completed, not the score, so try to fill multiple rows at a time. The more lines you fill at once, the more points you get per a line, so aim for a Tetris where you can. To do this, stack tetrominos throughout the play surface while leaving the rightmost column empty. Fill in the rightmost column when ready.
+
+>  Do not chase a Tetris at the expense of your current game layout.
+
+>  The deeper the gap, the harder it is to fill. When a gap is two squares deep, it can be filled with the l, j, and i piece. When it is three squares deep, it can only be filled with the i piece.
+
+>  Use hard drop sparingly. The hard drop eliminates the grace period where the player can still make momentary adjustments after the tetromino has landed. The grace period gives the user more time to plan the next tetromino's placement, so try to use fast drop instead.
+
+
+DEVELOPMENT INFORMATION
+__________________________
 
 This is the code for my first official Python project. It is a bare-bones tetris style game.
 - Josef Gisis 9/8/2023

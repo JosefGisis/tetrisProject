@@ -3,10 +3,7 @@ This module contains interactive surfaces using the Pygame library.
 Use Surfaces.info() to get information.
 """
 
-# TODO: add feature that checks if the mouse has gone of the screen surface
 import pygame
-pygame.init()
-screen = pygame.display.set_mode((1000, 800))
 
 
 def info():
@@ -22,7 +19,6 @@ def info():
           "\nWarningBox.button2_rect(): returns the location and dimensions for an optional button (two of two)."
           "\n\nTextBox(self, surface, text, rect)"
           "\n> text parameter: takes text for display (preferably from a text file)."
-          "\nTextBox.layout_text(): sets up text layout."
           "\nTextBox.update_box(): checks for user input and displays text."
           "\nTextBox.scroll(self, speed): allows other user inputs to scroll through text."
           "\n> speed parameter: set custom scroll speed (set positive or negative).")
@@ -154,6 +150,7 @@ class TextBox:
         self.holding_scroll = False
         # by default the scroll ratio is 1 (meaning the text is the same size as the scroll range)
         self.scroll_ratio = self.scroll_range // self.text_height
+        # these two variables help prevent the scrollbar from being selected accidentally
         self.clicked = self.in_range = False
         self.layout_text()  # layout text function
 
@@ -193,41 +190,61 @@ class TextBox:
     def update_box(self):
         # checks if player has released mouse button and gets current position for later comparison
         if not pygame.mouse.get_pressed()[0]:
-            self.clicked = False
-            self.in_range = False
-            pygame.mouse.get_rel()
+            self.clicked = False  # mouse is no longer held down
+            pygame.mouse.get_rel()  # updates mouse position
             self.holding_scroll = False  # player has released hold
+
         # gets relative position of mouse
         mouse_xpos, mouse_ypos = pygame.mouse.get_pos()
         mouse_pos = mouse_xpos - self.left, mouse_ypos - self.top
+
         # checks if user hovers over buttons and grabs hold of scroll bar
         if (self.scroll_left - 10) <= mouse_pos[0] <= (self.scroll_left + 20):
             if 20 <= mouse_pos[1] <= (self.height - 20):
-                if self.scroll_top <= mouse_pos[1] <= (self.scroll_top + self.scroll_height):
+                if self.scroll_top <= mouse_pos[1] <= (self.scroll_top + self.scroll_height):  # mouse of scrollbar
+                    """
+                    Self.clicked and self.in_range ensure the user has not unintentionally selected the scroll bar or
+                    a scroll location by dragging the mouse over the scroll range while holding down the mouse button.
+                    Self.clicked checks if the user has been holding down the mousebutton before hovering over the 
+                    scrollbar, and self.in_range checks if the user has pressed the mousebutton while within the 
+                    scroll range. 
+                    """
                     if pygame.mouse.get_pressed()[0] and not self.clicked or self.in_range:
                         self.in_range = False
                         self.clicked = True
                         self.holding_scroll = True
-                else:
+                else:  # mouse not scroll range, but not on scrollbar itself
                     if pygame.mouse.get_pressed()[0] and not self.clicked:
                         self.in_range = True
+                        # subtracting self.scroll_height // 2 centers the scrollbar over the mouse
                         dif = mouse_pos[1] - self.scroll_top - (self.scroll_height // 2)
                         self.scroll(dif)
+
         # while holding scroll bar and hovering over scroll range
         if self.holding_scroll and 20 <= mouse_pos[1] <= (self.height - 20):
             difference = pygame.mouse.get_rel()[1]
             self.scroll(difference)
+
         self.display_box()
-        if pygame.mouse.get_pressed()[0]:
+
+        if pygame.mouse.get_pressed()[0]:  # checks if user has been holding down key before selecting scrollbar
             self.clicked = True
 
-    def display_box(self):
+    def display_box(self):  # blit all elements to the screen
         self.text_surface.fill((40, 40, 40))
-        for i in range(len(self.word_surfs)):
-            self.text_surface.blit(self.word_surfs[i], (self.word_pos[i][0], self.word_pos[i][1] + self.text_top))
+        for surf, pos in zip(self.word_surfs, self.word_pos):  # get each word and its position
+            self.text_surface.blit(surf, (pos[0], pos[1] + self.text_top))  # self.text_top controls scrolling pos
         pygame.draw.rect(self.text_surface, (200, 200, 200),
                          (self.scroll_left, self.scroll_top, 10, self.scroll_height))
         self.surface.blit(self.text_surface, (self.left, self.top))
+
+    """
+    Scroll move the text and scroll bar vertically. Scroll takes the parameter speed and checks if the text/scroll bar
+    has hit the top or bottom boundary. If movement is allowed, the function checks if the magnitude of the movement
+    will exceed the top or bottom boundaries and truncates the movement if it will. Then it moves the scroll bar by
+    speed and the text by speed multiplied by self.scroll_ratio (determined by the ratio of the size of the text
+    and the surface).
+    """
 
     def scroll(self, speed):
         if speed > 0 and (self.scroll_top + self.scroll_height) < (self.height - 20):
@@ -240,30 +257,3 @@ class TextBox:
                 speed = 20 - self.scroll_top
             self.scroll_top += speed
             self.text_top -= speed * self.scroll_ratio
-
-info()
-with open("textbox", "r+") as f:
-    message = f.read()
-
-text_box = TextBox(screen, message, (100, 100, 800, 600))
-
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 4:
-                text_box.scroll(-10)
-            elif event.button == 5:
-                text_box.scroll(10)
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_DOWN:
-                text_box.scroll(12)
-            elif event.key == pygame.K_UP:
-                text_box.scroll(-12)
-    screen.fill((255, 255, 255))
-    text_box.update_box()
-    pygame.display.flip()
-
-pygame.quit()
