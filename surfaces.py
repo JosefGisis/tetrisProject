@@ -44,8 +44,6 @@ class Button:
 
     def update_button(self):
         self.surface.blit(self.image1, (self.left, self.top))  # displays default image
-        if not pygame.mouse.get_pressed()[0]:  # checks if player is holding down mouse key
-            self.clicked = False
         mouse_posx, mouse_posy = pygame.mouse.get_pos()
         # adjusts mouse position by the relative position of the surface
         mouse_pos = mouse_posx - self.relative_pos[0], mouse_posy - self.relative_pos[1]
@@ -57,6 +55,8 @@ class Button:
                 return True
         if pygame.mouse.get_pressed()[0]:
             self.clicked = True
+        else:  # checks if player is holding down mouse key
+            self.clicked = False
 
 
 """
@@ -84,8 +84,6 @@ class TextButton:
         self.text_top = (self.height - self.text_surf.get_height()) // 2
 
     def update_button(self):
-        if not pygame.mouse.get_pressed()[0]:
-            self.clicked = False
         mouse_posx, mouse_posy = pygame.mouse.get_pos()
         mouse_pos = mouse_posx - self.relative_pos[0], mouse_posy - self.relative_pos[1]
         if self.left <= mouse_pos[0] <= self.right and self.top <= mouse_pos[1] <= self.bottom:
@@ -99,6 +97,8 @@ class TextButton:
         self.surface.blit(self.button_surf, (self.left, self.top))
         if pygame.mouse.get_pressed()[0]:
             self.clicked = True
+        else:
+            self.clicked = False
 
 
 class WarningBox:  # warning dialogue box class
@@ -157,7 +157,7 @@ class TextBox:
         # by default the scroll ratio is 1 (meaning the text is the same size as the scroll range)
         self.scroll_ratio = self.scroll_range // self.text_height
         # these two variables help prevent the scrollbar from being selected accidentally
-        self.clicked = self.in_range = False
+        self.clicked = False
         self.layout_text()  # layout text function
 
         """
@@ -194,12 +194,6 @@ class TextBox:
         """
 
     def update_box(self):
-        # checks if player has released mouse button and gets current position for later comparison
-        if not pygame.mouse.get_pressed()[0]:
-            self.clicked = False  # mouse is no longer held down
-            pygame.mouse.get_rel()  # updates mouse position
-            self.holding_scroll = False  # player has released hold
-
         # gets relative position of mouse
         mouse_xpos, mouse_ypos = pygame.mouse.get_pos()
         mouse_pos = mouse_xpos - self.left, mouse_ypos - self.top
@@ -207,34 +201,31 @@ class TextBox:
         # checks if user hovers over buttons and grabs hold of scroll bar
         if (self.scroll_left - 10) <= mouse_pos[0] <= (self.scroll_left + 20):
             if 20 <= mouse_pos[1] <= (self.height - 20):
-                if self.scroll_top <= mouse_pos[1] <= (self.scroll_top + self.scroll_height):  # mouse of scrollbar
-                    """
-                    Self.clicked and self.in_range ensure the user has not unintentionally selected the scroll bar or
-                    a scroll location by dragging the mouse over the scroll range while holding down the mouse button.
-                    Self.clicked checks if the user has been holding down the mousebutton before hovering over the 
-                    scrollbar, and self.in_range checks if the user has pressed the mousebutton while within the 
-                    scroll range. 
-                    """
-                    if pygame.mouse.get_pressed()[0] and not self.clicked or self.in_range:
-                        self.in_range = False
-                        self.clicked = True
-                        self.holding_scroll = True
-                else:  # mouse not scroll range, but not on scrollbar itself
-                    if pygame.mouse.get_pressed()[0] and not self.clicked:
-                        self.in_range = True
-                        # subtracting self.scroll_height // 2 centers the scrollbar over the mouse
-                        dif = mouse_pos[1] - self.scroll_top - (self.scroll_height // 2)
-                        self.scroll(dif)
+                """
+                Self.clicked ensures the user has not unintentionally selected the scroll bar or
+                a scroll location by dragging the mouse over the scroll range while holding down the mouse button.
+                Self.clicked checks if the user has been holding down the mousebutton before hovering over the 
+                scrollbar.
+                """
+                if pygame.mouse.get_pressed()[0] and not self.clicked:
+                    self.holding_scroll = True
+                    # subtracting self.scroll_height // 2 centers the scrollbar over the mouse
+                    difference = mouse_pos[1] - self.scroll_top - (self.scroll_height // 2)
+                    self.scroll(difference)
 
         # while holding scroll bar and hovering over scroll range
         if self.holding_scroll and 20 <= mouse_pos[1] <= (self.height - 20):
             difference = pygame.mouse.get_rel()[1]
             self.scroll(difference)
 
-        self.display_box()
-
         if pygame.mouse.get_pressed()[0]:  # checks if user has been holding down key before selecting scrollbar
             self.clicked = True
+        else:  # when user has let go of mouse button
+            self.clicked = False
+            pygame.mouse.get_rel()
+            self.holding_scroll = False
+
+        self.display_box()
 
     def display_box(self):  # blit all elements to the screen
         self.text_surface.fill((40, 40, 40))
