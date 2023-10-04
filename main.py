@@ -7,20 +7,42 @@ their appearance and give them colors.
 import sys, pygame, random
 import surfaces as btn
 import tools as tls
+from datetime import datetime
 
 
 class Score:  # this is the scoreboard object that tracks scores
-    def __init__(self, banner_list, score_list):
+    def __init__(self, banner_list, score_list, file):
         self.score_list = score_list  # assigns scores
         self.banner_list = banner_list  # displayed banners
         self.highscore_banner = "HIGHSCORE:"
         self.highscore = 0
+        self.file = file
 
-    def get_highscore(self, file):
-        pass
+    def get_highscore(self):
+        with open(self.file, "r") as infile:
+            first_entry = infile.readline()
+        if first_entry:
+            self.highscore = int(first_entry.split(" ")[-1].strip("\n"))
+        else:
+            self.highscore = 0
+
+    def set_highscore(self, score):
+        self.highscore = score
+        with open(self.file, "r") as infile:
+            highscores = infile.readlines()
+        current_time = datetime.now()
+        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        new_entry = "{0} {1:-> 16}\n".format(formatted_time, self.highscore)
+        highscores.insert(0, new_entry)
+        with open(self.file, "w") as outfile:
+            outfile.writelines(highscores)
 
     def reset_score(self, score_list):  # resets the scoreboard
         self.score_list = score_list
+
+    def empty_highscores(self):
+        with open(self.file, "w") as outfile:
+            outfile.write("")
 
 
 """
@@ -151,10 +173,11 @@ def get_lines():
 
 def update_score():
     points = (0, 100, 300, 500, 700)
-    scores.score_list[2] += 10  # the player gets 10 points everytime a piece is dropped
-    filled_lines = get_lines()
-    scores.score_list[2] += points[len(filled_lines)]  # checks filled lines to see how points player should receive
-    scores.score_list[1] += len(filled_lines)
+    if not game_over:
+        scores.score_list[2] += 10  # the player gets 10 points everytime a piece is dropped
+        filled_lines = get_lines()
+        scores.score_list[2] += points[len(filled_lines)]  # checks filled lines to see how points player should receive
+        scores.score_list[1] += len(filled_lines)
 
 
 def difficulty_level():  # this function checks if the game difficulty should be increased
@@ -472,7 +495,8 @@ This segment contains variables/constants/objects used throughout the program
 ________________________________________________________________________________________________________________________
 """
 SEGMENT_SIZE = 36  # segment size is based on tetro segment sizes and controls dimensions throughout the program
-color_dict = {"black": (0, 0, 0), "white": (255, 255, 255), "dark purple": (75, 25, 100), "darker purple": (50, 0, 75)}
+color_dict = {"black": (0, 0, 0), "white": (255, 255, 255), "dark purple": (75, 25, 100), "darker purple": (50, 0, 75),
+              "dark gray": (40, 40, 40)}
 main_font = "ocraextended"
 copyrite_font = pygame.font.Font(None, 30)  # small font for copyrite and version information
 title_font = pygame.font.SysFont(main_font, 80)  # large font for titles
@@ -572,8 +596,8 @@ line_image2 = pygame.image.load("images/line_completed2.jpg")
 # scoreboard rect sets the dimensions and locations of the scoreboard.
 scoreboard_surf = pygame.Surface((SEGMENT_SIZE * 6, SEGMENT_SIZE * 16 + 10))
 scoreboard_pos = (tls.center(play_surface_left, SEGMENT_SIZE * 6), play_surface_top)
-scores = Score(("LEVEL:", "LINES:", "SCORE:"), [1, 0, -10])  # scoreboard initializes a Scoreboard object.
-
+scores = Score(("LEVEL:", "LINES:", "SCORE:"), [1, 0, -10], "gamedata")  # scoreboard initializes a Scoreboard object.
+scores.get_highscore()
 
 """
 This segment contains variables/constants/objects for the main menu
@@ -602,14 +626,10 @@ pause_surface.set_alpha(125)
 pause_surface_left, pause_surface_top = tls.center(screen_width, pause_surface_width), \
                                        tls.center(screen_height, pause_surface_height)
 pause_button_left = tls.center(screen_width, 288)
-pause_imgs = (pygame.image.load("images/pause_menu_buttons1.jpg"), pygame.image.load("images/pause_menu_buttons2.jpg"),
-              pygame.image.load("images/pause_menu_buttons3.jpg"), pygame.image.load("images/pause_menu_buttons4.jpg"),
-              pygame.image.load("images/pause_menu_buttons5.jpg"), pygame.image.load("images/pause_menu_buttons6.jpg"),
-              pygame.image.load("images/pause_menu_buttons7.jpg"), pygame.image.load("images/pause_menu_buttons8.jpg"))
-resume_button = btn.Button(screen, (pause_button_left, 210), pause_imgs[0], pause_imgs[1])
-options_button = btn.Button(screen, (pause_button_left, 310), pause_imgs[2], pause_imgs[3])
-restart_button = btn.Button(screen, (pause_button_left, 410), pause_imgs[4], pause_imgs[5])
-quit_button = btn.Button(screen, (pause_button_left, 510), pause_imgs[6], pause_imgs[7])
+pause_button1 = btn.TextButton(screen, (pause_button_left, 210, 288, 80), "RESUME", color_dict["dark gray"])
+pause_button2 = btn.TextButton(screen, (pause_button_left, 310, 288, 80), "HELP", color_dict["dark gray"])
+pause_button3 = btn.TextButton(screen, (pause_button_left, 410, 288, 80), "RESTART", color_dict["dark gray"])
+pause_button4 = btn.TextButton(screen, (pause_button_left, 510, 288, 80), "QUIT", color_dict["dark gray"])
 
 
 """
@@ -631,6 +651,31 @@ back_button = btn.TextButton(screen, (help_border_left + 20, help_border_top + 1
 strt_button = btn.TextButton(screen, ((help_border_left + screen_width - 290), help_border_top + 10, 150, 40),
                              "START >>", (20, 20, 20))
 
+
+"""
+This segment contains variables/constants/objects used in the game over section.
+________________________________________________________________________________________________________________________
+"""
+game_over_size = game_over_width, game_over_height = SEGMENT_SIZE * 20, SEGMENT_SIZE * 15
+game_over_surface = pygame.Surface(game_over_size, pygame.SRCALPHA)
+game_over_surface.set_alpha(125)
+game_over_left, game_over_top = tls.center(screen_width, game_over_width), \
+                                       tls.center(screen_height, game_over_height)
+score_box_rect = (tls.center(screen_width, SEGMENT_SIZE * 11) - (4 * SEGMENT_SIZE) + 20, tls.center(screen_height, SEGMENT_SIZE * 13),
+                  SEGMENT_SIZE * 11, SEGMENT_SIZE * 13)
+game_over_button_left, game_over_button_top = score_box_rect[0] + score_box_rect[2] + SEGMENT_SIZE,\
+                                              score_box_rect[1] + score_box_rect[3] - 275
+game_over_button1 = btn.TextButton(screen, (game_over_button_left, game_over_button_top, 210, 75), "RESTART", (40, 40, 40))
+game_over_button2 = btn.TextButton(screen, (game_over_button_left, game_over_button_top + 100, 210, 75), "MAIN MENU", (40, 40, 40))
+game_over_button3 = btn.TextButton(screen, (game_over_button_left, game_over_button_top + 200, 210, 75), "EXIT", (40, 40, 40))
+new_highscore_surf = title_font.render("NEW HIGHSCORE!", True, color_dict["white"])
+new_highscore_location = tls.center(screen_width, new_highscore_surf.get_width()), tls.center(screen_height, new_highscore_surf.get_height())
+game_surf = title_font.render("GAME", True, color_dict["white"])
+over_surf = title_font.render("OVER!", True, color_dict["white"])
+game_surf_location = score_box_rect[0] + score_box_rect[2] + SEGMENT_SIZE, score_box_rect[1]
+over_surf_location = score_box_rect[0] + score_box_rect[2] + SEGMENT_SIZE, score_box_rect[1] + 75
+
+
 """
 Game state functions 
 ________________________________________________________________________________________________________________________
@@ -638,7 +683,6 @@ ________________________________________________________________________________
 
 
 def main_menu():  # function for the main menu
-    screen.blit(bg_img,(0, 0))
     clicked = False  # prevents inadvertent menu selections while holding mouse button down from other states
     running = True
     while running:
@@ -652,12 +696,15 @@ def main_menu():  # function for the main menu
                         gen_next()  # generates the next tetro starting the next, current ... next cascade
                         return "start"
                     elif event.key == pygame.K_h:
+                        new_game()
+                        gen_next()
                         return "help and info"
                     elif event.key == pygame.K_x:
                         running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 clicked = True
 
+        screen.blit(bg_img, (0, 0))
         screen.blit(title_surf, title_pos)
         screen.blit(copyrite_surf, copyrite_pos)
 
@@ -666,6 +713,8 @@ def main_menu():  # function for the main menu
             gen_next()
             return "start"  # when user clicks button
         elif help_button.update_button() and clicked:
+            new_game()
+            gen_next()
             return "help and info"
         elif exit_button.update_button() and clicked:
             running = False  # ends game loop
@@ -767,6 +816,7 @@ def start_game():  # main game loop functions
                 filled_lines_handler()  # empties filled rows and shifts other rows to their new position
                 new_tetro()  # generate a new tetro and new upcoming tetro
         else:
+            screen_capture = pygame.Surface.copy(screen)  # gets copy of current screen
             return "game over"
     pygame.quit()
 
@@ -784,21 +834,28 @@ def pause_menu():  # pause menu loop
         pause_surface.fill(color_dict["white"])
         screen.blit(screen_capture, (0, 0))
         screen.blit(pause_surface, (pause_surface_left, pause_surface_top))
-        if resume_button.update_button():
+        if pause_button1.update_button():
             return "start"
-        elif options_button.update_button():
-            return "pause menu"
-        elif restart_button.update_button():
+        elif pause_button2.update_button():
+            return "help and info"
+        elif pause_button3.update_button():
             new_game()
             gen_next()
             return "start"
-        elif quit_button.update_button():
+        elif pause_button4.update_button():
             return "main menu"
         pygame.display.flip()
     return "exit"
 
 
 def gameover():  # game over loop
+    if scores.highscore < scores.score_list[2]:  # checks if player has achieved new high score
+        scores.set_highscore(scores.score_list[2])
+
+    with open("gamedata", "r") as infile:
+        score_text = infile.read()
+    score_box = btn.TextBox(screen, score_text, score_box_rect)
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -806,8 +863,25 @@ def gameover():  # game over loop
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    return "main menu"
-    return "main menu"
+                    new_game()
+                    gen_next()
+                    return "start"
+        game_over_surface.fill(color_dict["white"])
+        screen.blit(screen_capture, (0, 0))
+        screen.blit(game_over_surface, (game_over_left, game_over_top))
+        score_box.update_box()
+        if game_over_button1.update_button():
+            new_game()
+            gen_next()
+            return "start"
+        if game_over_button2.update_button():
+            return "main menu"
+        if game_over_button3.update_button():
+            return "exit"
+        screen.blit(game_surf, game_surf_location)
+        screen.blit(over_surf, over_surf_location)
+        pygame.display.flip()
+    return "exit"
 
 
 def help_and_info():  # help and info state function
@@ -833,20 +907,16 @@ def help_and_info():  # help and info state function
                     info_box.scroll(-12)
                 if pygame.key.get_mods() & pygame.KMOD_SHIFT:
                     if event.key == pygame.K_g:
-                        new_game()
-                        gen_next()
                         return "start"
 
         screen.blit(help_border, (help_border_left, help_border_top))
         screen.blit(help_surf, help_surf_pos)
         info_box.update_box()
         if back_button.update_button():
-            info_box.text_top = 20
+            info_box.text_top = 20  # resets text and scroll location on returning from menu
             info_box.scroll_top = 20
             return "main menu"
         elif strt_button.update_button():
-            new_game()
-            gen_next()
             return "start"
         pygame.display.flip()
     return "exit"

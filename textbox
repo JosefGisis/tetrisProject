@@ -52,13 +52,19 @@ _______________
 >  Use hard drop sparingly. The hard drop eliminates the grace period where the player can still make momentary adjustments after the tetromino has landed. The grace period gives the user more time to plan the next tetromino's placement, so try to use fast drop instead.
 
 
-DEVELOPMENT INFORMATION
-__________________________
+VERSION INFORMATION
+______________________
 
-This is the code for my first official Python project. It is a bare-bones tetris style game.
+v 1.0:
+Base version with minimal features.
+
+
+DEVELOPMENT INFORMATION
+___________________________
+
+This is the code for my first official Python project.
 - Josef Gisis 9/8/2023
 
-Surface images for tetris pieces and destroyed lines created by Josef Gisis
+Surface images for tetris pieces, button (and button font) and destroyed lines created by Josef Gisis.
 
-Background image designed by rawpixel.com / Freepik
-HOW TO PLAY
+Background image designed by rawpixel.com / Freepik.
