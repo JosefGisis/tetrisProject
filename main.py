@@ -636,9 +636,9 @@ title_surf = title_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
 title_pos = (center(screen_width, title_surf.get_width()), 110)
 copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.0", True, color_dict["white"])
 copyrite_pos = (center(screen_width, copyrite_surf.get_width()), 680)
-menu_imgs = (pygame.image.load("images/menu_button1.jpg"), pygame.image.load("images/menu_button2.jpg"),
-             pygame.image.load("images/menu_button3.jpg"), pygame.image.load("images/menu_button4.jpg"),
-             pygame.image.load("images/menu_button5.jpg"), pygame.image.load("images/menu_button6.jpg"))
+menu_imgs = (pygame.image.load("images/menu_button1.png"), pygame.image.load("images/menu_button2.png"),
+             pygame.image.load("images/menu_button3.png"), pygame.image.load("images/menu_button4.png"),
+             pygame.image.load("images/menu_button5.png"), pygame.image.load("images/menu_button6.png"))
 button_left = center(screen_width, 500)  # gets the left starting point of the button
 start_button = Button(screen, (button_left, 290), menu_imgs[0], menu_imgs[1])
 help_button = Button(screen, (button_left, 420), menu_imgs[2], menu_imgs[3])
@@ -655,11 +655,13 @@ pause_surface = pygame.Surface(pause_surface_size, pygame.SRCALPHA)
 pause_surface.set_alpha(125)
 pause_surface_left, pause_surface_top = center(screen_width, pause_surface_width), \
                                         center(screen_height, pause_surface_height)
+paused_surf = title_font.render("PAUSED", True, color_dict["white"])
+paused_surf_pos = center(screen_width, paused_surf.get_width()), 100
 pause_button_left = center(screen_width, 288)
-pause_button1 = TextButton(screen, (pause_button_left, 210, 288, 80), "RESUME", color_dict["dark gray"])
-pause_button2 = TextButton(screen, (pause_button_left, 310, 288, 80), "HELP", color_dict["dark gray"])
-pause_button3 = TextButton(screen, (pause_button_left, 410, 288, 80), "RESTART", color_dict["dark gray"])
-pause_button4 = TextButton(screen, (pause_button_left, 510, 288, 80), "QUIT", color_dict["dark gray"])
+pause_button1 = TextButton(screen, (pause_button_left, 255, 288, 80), "RESUME", color_dict["dark gray"])
+pause_button2 = TextButton(screen, (pause_button_left, 355, 288, 80), "HELP", color_dict["dark gray"])
+pause_button3 = TextButton(screen, (pause_button_left, 455, 288, 80), "RESTART", color_dict["dark gray"])
+pause_button4 = TextButton(screen, (pause_button_left, 555, 288, 80), "QUIT", color_dict["dark gray"])
 
 
 """
@@ -818,7 +820,7 @@ def start_game():  # main game loop functions
                     time has passed the piece was last shifted. If conditions are met, the piece is shifted and 
                     the last shift time is updated.
                     """
-                    # TODO: check time_clicked variables scale
+                    # TODO: initialize time clicked variables
                     if pygame.time.get_ticks() - time_clicked_r >= KEY_DELAY \
                             and pygame.time.get_ticks() - prev_shift_time >= SHIFT_INTERVAL:
                         shift_right()
@@ -829,8 +831,8 @@ def start_game():  # main game loop functions
                         shift_left()
                         prev_shift_time = pygame.time.get_ticks()
                 if pressed_keys[pygame.K_s]:
-                    if pygame.time.get_ticks() - time_clicked_s >= KEY_DELAY - 75 \
-                            and (pygame.time.get_ticks() - prev_drop_time) >= (SHIFT_INTERVAL - 25):
+                    if (pygame.time.get_ticks() - time_clicked_s) >= (KEY_DELAY - 100) \
+                            and (pygame.time.get_ticks() - prev_drop_time) >= (SHIFT_INTERVAL - 26):
                         shift_down(5)  # Shift down is passed a 3 millisecond argument to extend the grace period
                         prev_drop_time = pygame.time.get_ticks()
             else:
@@ -868,6 +870,7 @@ def pause_menu():  # pause menu loop
         pause_surface.fill(color_dict["white"])
         screen.blit(screen_capture, (0, 0))
         screen.blit(pause_surface, (pause_surface_left, pause_surface_top))
+        screen.blit(paused_surf, paused_surf_pos)
         if pause_button1.update_button():
             return "start"
         elif pause_button2.update_button():
