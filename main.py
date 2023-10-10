@@ -4,9 +4,10 @@ short for tetromino, segment refers to one of the four parts of each tetromino, 
 structures each tetromino shape, and surface (regarding segments) refers to images displayed on each segment to enhance
 their appearance and give them colors.
 """
+# TODO: add documentation
 import sys, pygame, random
-import surfaces as btn
-import tools as tls
+from surfaces import*
+from tools import center
 from datetime import datetime
 
 
@@ -16,33 +17,33 @@ class Score:  # this is the scoreboard object that tracks scores
         self.banner_list = banner_list  # displayed banners
         self.highscore_banner = "HIGHSCORE:"
         self.highscore = 0
+        # TODO: find a way to prevent users from altering scores
         self.file = file
 
     def get_highscore(self):
+        # TODO: what happens if there is no file self.file?
         with open(self.file, "r") as infile:
-            first_entry = infile.readline()
-        if first_entry:
+            first_entry = infile.readline()  # retrieves first entry which is latest highscore
+        if first_entry:  # if there is highscore, retrieves last word of first entry (the highscore)
             self.highscore = int(first_entry.split(" ")[-1].strip("\n"))
-        else:
+        else:  # defaults to 0
             self.highscore = 0
 
     def set_highscore(self, score):
         self.highscore = score
         with open(self.file, "r") as infile:
-            highscores = infile.readlines()
+            highscores = infile.readlines()  # retrieves highscores
         current_time = datetime.now()
-        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        new_entry = "{0} {1:-> 16}\n".format(formatted_time, self.highscore)
-        highscores.insert(0, new_entry)
+        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")  # removes milliseconds
+        # TODO: ensure large scores does not throw an exception
+        new_entry = "{0} {1:-> 15}\n".format(formatted_time, self.highscore)  # formats new highscore
+        highscores.insert(0, new_entry)  # places new highscore at beginning of list
         with open(self.file, "w") as outfile:
             outfile.writelines(highscores)
 
+    # TODO: reformat to remove parameters
     def reset_score(self, score_list):  # resets the scoreboard
         self.score_list = score_list
-
-    def empty_highscores(self):
-        with open(self.file, "w") as outfile:
-            outfile.write("")
 
 
 """
@@ -62,8 +63,8 @@ class Segment(pygame.sprite.Sprite):
 
 """
 The new game function is responsible for resetting all game loop variables. The current_tetro empty needs to be emptied
-otherwise it remains above the play surface and game over repeats. Most variables are reset when the first moving
-tetromino is generated. 
+otherwise it remains above the play surface and game over repeats. These are few variables to start a new game. Note,
+most variables are reset when the first moving tetromino is generated in the new tetromino function. 
 """
 
 
@@ -121,9 +122,9 @@ def gen_next():
     play surface. However this cause to not be properly display on the next piece surface.
     """
     if next_letter != O_PIECE:
-        left = tls.center(next_surface_width, SEGMENT_SIZE * len(next_letter))
+        left = center(next_surface_width, SEGMENT_SIZE * len(next_letter))
     else:
-        left = tls.center(next_surface_width, SEGMENT_SIZE * 2) - SEGMENT_SIZE  # SEGMENT_SIZEx2 for width of o piece
+        left = center(next_surface_width, SEGMENT_SIZE * 2) - SEGMENT_SIZE  # SEGMENT_SIZEx2 for width of o piece
     for row_index, row in enumerate(next_letter):
         for column_index, column in enumerate(row):
             if column:
@@ -137,7 +138,7 @@ def gen_next():
 
 
 def new_tetro():  # creates new tetro when current tetro has dropped
-    global tetro_top, tetro_left, current_tetro, dropped, current_letter, current_surface, rotation_state
+    global tetro_top, tetro_left, dropped, current_letter, current_surface, rotation_state
     tetro_left, tetro_top = (3 * SEGMENT_SIZE), (-2 * SEGMENT_SIZE)  # sets tetromino starting point
     current_letter, current_surface = next_letter, next_surface  # current tetro inherits next tetro's shape and surface
     gen_tetro(current_letter, current_surface)  # generate new current tetro
@@ -167,41 +168,46 @@ def check_pos():
             dropped_segments[segment.rect.top // SEGMENT_SIZE].add(segment)  # assigns the segment to the correct row
 
 
-def get_lines():
+def get_lines():  # gets number and location of filled lines
     return[row_index for row_index, row in enumerate(dropped_segments) if len(row) == 10]
 
 
 def update_score():
     points = (0, 100, 300, 500, 700)
-    if not game_over:
+    if not game_over:  # ensures users does not receive points after game is over
         scores.score_list[2] += 10  # the player gets 10 points everytime a piece is dropped
-        filled_lines = get_lines()
+        filled_lines = get_lines()  # gets number of filled lines
         scores.score_list[2] += points[len(filled_lines)]  # checks filled lines to see how points player should receive
         scores.score_list[1] += len(filled_lines)
 
 
 def difficulty_level():  # this function checks if the game difficulty should be increased
     global drop_rate, grace_period
-    if scores.score_list[0] < scores.score_list[1] // 10 + 1:  # has there been a change in the level
+    if scores.score_list[0] < scores.score_list[1] // 10 + 1:  # level increases every 10 filled rows
+        # TODO: drop rate should slow down once a certain speed is hit
         drop_rate -= 20  # increase drop speed
-        grace_period += 5  # proportionally increase grace period
+        # TODO: grace period should match speed increase
+        grace_period += 6  # proportionally increase grace period
         scores.score_list[0] = scores.score_list[1] // 10 + 1
 
 
+# TODO: improve line completion animations
 def line_animation():  # temporary function
     filled_lines = get_lines()
-    if filled_lines:
-        for h in range(3):
-            for j in range(45):
-                for i in filled_lines:
-                    screen.blit(line_image1, (tls.center(screen_width, play_surface_width),
-                                 (i * SEGMENT_SIZE + tls.center(screen_height, play_surface_height))))
-                pygame.display.flip()
-            for j in range(45):
-                for i in filled_lines:
-                    screen.blit(line_image2, (((screen_width - play_surface_width) // 2),
-                                 (i * SEGMENT_SIZE + ((screen_height - play_surface_height) // 2))))
-                pygame.display.flip()
+    if not game_over:
+        if filled_lines:
+            for h in range(3):
+                for j in range(45):
+                    # TODO: vary letter variables
+                    for i in filled_lines:
+                        screen.blit(line_image1, (center(screen_width, play_surface_width),
+                                    (i * SEGMENT_SIZE + center(screen_height, play_surface_height))))
+                    pygame.display.flip()
+                for j in range(45):
+                    for i in filled_lines:
+                        screen.blit(line_image2, (((screen_width - play_surface_width) // 2),
+                                    (i * SEGMENT_SIZE + ((screen_height - play_surface_height) // 2))))
+                    pygame.display.flip()
 
 
 """
@@ -262,7 +268,7 @@ def shift_right():
     if dropped < grace_period:
         if not move_blocked(SEGMENT_SIZE, 0):  # checks if piece will collide 36 pixels to the right
             for segment in current_tetro.sprites():
-                segment.rect.centerx += SEGMENT_SIZE
+                segment.rect.left += SEGMENT_SIZE
             tetro_left += SEGMENT_SIZE  # updates the tetrominos leftmost position
 
 
@@ -271,7 +277,7 @@ def shift_left():
     if dropped < grace_period:
         if not move_blocked(-SEGMENT_SIZE, 0):  # checks if piece will collide 36 pixels to the left
             for segment in current_tetro.sprites():
-                segment.rect.centerx -= SEGMENT_SIZE
+                segment.rect.left -= SEGMENT_SIZE
             tetro_left -= SEGMENT_SIZE
 
 
@@ -286,10 +292,11 @@ accelerated descent button after the tetro has dropped, the grace period will st
 def shift_down(increment=10):  # default increment of 10
     global dropped, tetro_top
     if move_blocked(0, SEGMENT_SIZE):
+        # TODO: create visual indication of blocked pieces
         dropped += increment  # when dropped = increment the piece will have landed and a new piece will be generated
     else:
         for segment in current_tetro.sprites():
-            segment.rect.centery += SEGMENT_SIZE
+            segment.rect.top += SEGMENT_SIZE
         tetro_top += SEGMENT_SIZE
 
 
@@ -297,6 +304,7 @@ def hard_drop():  # this function instantly drops the tetromino
     global dropped
     while not move_blocked(0, SEGMENT_SIZE):  # while tetro has not hit the bottom yet
         shift_down()
+        # TODO: find a way to allow hard drop after blocked and before dropped
         dropped = grace_period  # no grace period is given
 
 
@@ -314,7 +322,9 @@ README file for a full explanation.This is the first version and will probably b
 Do not alter any check lists. Lists are calibrated to ensure tetrominos do not exceed play surface boundaries or collide
 with dropped tetrominos.
 """
-# TODO: test different rotation testing patterns
+
+# TODO: try different wallkick pattern and experiment
+# TODO: maybe relocate wallkick lists
 
 cw_check = [[[0, 1], [-1, -1], [2, 0], [-1, -1], [0, 1]], [[1, 0], [-1, 1], [0, -2], [-1, 1], [1, 0]],
             [[0, -1], [1, 1], [-2, 0], [1, 1], [0, -1]], [[-1, 0], [1, -1], [0, 2], [1, -1], [-1, 0]]]
@@ -331,7 +341,8 @@ ccw_ipiece_check = [[[0, 2], [0, -3], [2, 1], [-3, 0], [1, 0]], [[2, 0], [-3, 0]
 """
 See README file for a detailed explanation of the rotation functions.
 """
-# TODO: break rotation into smaller functions
+
+# TODO: improve and simplify rotation functions
 
 
 def cw_rotation():
@@ -340,6 +351,7 @@ def cw_rotation():
     if current_letter != O_PIECE and dropped < grace_period:
         rotated_letter = [[current_letter[j][i] for j in range(len(current_letter))]
                           for i in range(len(current_letter[0]))]
+        # TODO: list shadows built in function
         for list in rotated_letter:
             list.reverse()
         gen_tetro(rotated_letter, current_surface)
@@ -431,14 +443,18 @@ def ccw_rotation():
             gen_tetro(current_letter, current_surface)
 
 
+# TODO: create score update board
+
+
 def update_play_surface():
     play_surface.fill(color_dict["black"])
     current_tetro.draw(play_surface)  # uses sprite group to draw the current tetromino
     for row in dropped_segments:
         row.draw(play_surface)  # draws all the fallen pieces
     # Border is given one more pixel top and left because tetris pieces do not have borders top and left
-    pygame.draw.rect(screen, (0, 0, 0), [tls.center(screen_width, play_surface_width) - 6,
-                                         tls.center(screen_height, play_surface_height) - 6, play_surface_width + 11,
+    # TODO: border needs to be readjusted and possibly removed
+    pygame.draw.rect(screen, (0, 0, 0), [center(screen_width, play_surface_width) - 6,
+                                         center(screen_height, play_surface_height) - 6, play_surface_width + 11,
                                          play_surface_height + 11])
     screen.blit(play_surface, (play_surface_left, play_surface_top))
 
@@ -451,11 +467,13 @@ def display_scoreboard():
     :return:
     """
     scoreboard_surf.fill(color_dict["black"])
+    # TODO: improve score_list and banner_list
     score_list = (scores.highscore, scores.score_list[0], scores.score_list[1], scores.score_list[2])
     banner_list = (scores.highscore_banner, scores.banner_list[0], scores.banner_list[1], scores.banner_list[2])
     for index, banner in enumerate(banner_list):
-        banner_surface = banner_font.render((banner), True, (255, 255, 255))
+        banner_surface = banner_font.render(banner, True, (255, 255, 255))
         score_surface = score_font.render(str(score_list[index]), True, (175, 100, 255))
+        # TODO: ensure large scores do not go off screen
         scoreboard_surf.blit(banner_surface, (10, ((index * 4 * SEGMENT_SIZE) + 10)))  # text is 10 pixels from border
         scoreboard_surf.blit(score_surface, (10, ((2 * SEGMENT_SIZE) + (index * 4 * SEGMENT_SIZE) + 10)))
     screen.blit(scoreboard_surf, scoreboard_pos)
@@ -467,13 +485,14 @@ def display_next():
     next_tetro_surface.blit(next_banner_surface, next_banner_pos)
     screen.blit(next_tetro_surface, next_surface_pos)
 
+
 def display_keys():
     for key_index, key in enumerate(keys):
         if key == "KEYS":
             key_surface = banner_font.render(key, True, (255, 255, 255))
         else:
             key_surface = keys_font.render(key, True, (255, 255, 255))
-        screen.blit(key_surface, (tls.center(right_margin, next_surface_width) + play_surface_right,
+        screen.blit(key_surface, (center(right_margin, next_surface_width) + play_surface_right,
                                   key_index * SEGMENT_SIZE + 450))
 
 
@@ -481,9 +500,11 @@ def display_keys():
 declarations
 ________________________________________________________________________________________________________________________
 """
-
+# TODO: clarify variables and constants
+# TODO: improve and streamline decelartions
 # initiates all pygame modules
 pygame.init()
+# TODO: find a way to make screen resizeable
 display_size = screen_width, screen_height = (1000, 800)
 screen = pygame.display.set_mode(display_size)
 pygame.display.set_caption("TITLE PLACEHOLDER")
@@ -494,6 +515,7 @@ clock = pygame.time.Clock()  # creates a Pygame clock object
 This segment contains variables/constants/objects used throughout the program
 ________________________________________________________________________________________________________________________
 """
+# TODO: experiment with different gap sizes
 SEGMENT_SIZE = 36  # segment size is based on tetro segment sizes and controls dimensions throughout the program
 color_dict = {"black": (0, 0, 0), "white": (255, 255, 255), "dark purple": (75, 25, 100), "darker purple": (50, 0, 75),
               "dark gray": (40, 40, 40)}
@@ -510,6 +532,8 @@ bg_img = pygame.transform.scale(pygame.image.load("images/bg.jpg"), display_size
 This segment contains variables/constants/constants used in the game loop.
 ________________________________________________________________________________________________________________________
 """
+# TODO: match order of variables with game state functions
+# TODO: rename and streamline gameloop variables
 game_over = False
 dropped = grace_period = 30
 
@@ -545,11 +569,12 @@ Z_PIECE = [[1, 1, 0],
            [0, 0, 0]]
 
 # parallel lists that match tetris shapes with their correct surface (each surface has a specified color)
+# TODO: these list can probably be zipped somewhere
 TETRO_LETTERS = (I_PIECE, J_PIECE, L_PIECE, T_PIECE, O_PIECE, S_PIECE, Z_PIECE)
-TETRO_SURFACES = (pygame.image.load("images/teal_segment.jpg"), pygame.image.load("images/blue_segment.jpg"),
-                  pygame.image.load("images/orange_segment.jpg"), pygame.image.load("images/purple_segment.jpg"),
-                  pygame.image.load("images/magenta_segment.jpg"), pygame.image.load("images/green_segment.jpg"),
-                  pygame.image.load("images/red_segment.jpg"))
+TETRO_SURFACES = (pygame.image.load("images/teal_segment.png"), pygame.image.load("images/blue_segment.png"),
+                  pygame.image.load("images/orange_segment.png"), pygame.image.load("images/purple_segment.png"),
+                  pygame.image.load("images/magenta_segment.png"), pygame.image.load("images/green_segment.png"),
+                  pygame.image.load("images/red_segment.png"))
 current_tetro = pygame.sprite.Group()  # falling tetromino group
 next_tetro = pygame.sprite.Group()  # upcoming tetromino group
 
@@ -561,12 +586,13 @@ rotation_state = 0  # falling tetromino's degree of rotation (0: 0, 1: 90, 2: 18
 tetro_left = (3 * SEGMENT_SIZE)  # falling tetromino's leftmost position
 tetro_top = (-2 * SEGMENT_SIZE)  # falling tetromino's topmost position
 
-
+# TODO: create list using list comprehension method
 dropped_segments = []  # This list and loop create an array of sprite groups. Each group tracks one of twenty rows
 for i in range(20):
     dropped_row = pygame.sprite.Group()
     dropped_segments.append(dropped_row)
 
+# TODO: some of these variables may be redundant
 KEY_DELAY = 150  # used to delay hold down button feature. Literal represents milliseconds
 SHIFT_INTERVAL = 60  # interval to slow tetro movement
 prev_shift_time = 50  # tracks previous movement time for comparison with SHIFT_INTERVAL
@@ -576,17 +602,17 @@ drop_rate = 250  # controls tetromino drop rate and decreases with difficulty
 # play surface and next surface dimensions
 play_surface_size = play_surface_width, play_surface_height = SEGMENT_SIZE * 10, SEGMENT_SIZE * 20
 play_surface = pygame.Surface(play_surface_size)
-play_surface_left, play_surface_top = tls.center(screen_width, play_surface_width), \
-                                      tls.center(screen_height, play_surface_height)
+play_surface_left, play_surface_top = center(screen_width, play_surface_width), \
+                                      center(screen_height, play_surface_height)
 play_surface_right, play_surface_bottom = play_surface_left + play_surface_width, play_surface_top + play_surface_height
 right_margin = screen_width - play_surface_right
 # surface for displaying upcoming tetromino
 next_surface_size = next_surface_width, next_surface_height = SEGMENT_SIZE * 5, SEGMENT_SIZE * 6
 next_tetro_surface = pygame.Surface(next_surface_size)
-next_surface_pos = tls.center(right_margin, SEGMENT_SIZE * 6) + play_surface_right,\
-                   tls.center(screen_height, play_surface_height)
+next_surface_pos =  center(right_margin, SEGMENT_SIZE * 6) + play_surface_right,\
+                    center(screen_height, play_surface_height)
 next_banner_surface = banner_font.render("NEXT", True, (255, 255, 255))
-next_banner_pos = tls.center(SEGMENT_SIZE * 5, next_banner_surface.get_width()), 10
+next_banner_pos =  center(SEGMENT_SIZE * 5, next_banner_surface.get_width()), 10
 # key instruction list for displaying
 keys = ["KEYS", "_______", "ESC: pause menu", "R ARROW: move right", "L ARROW: move left", "D: rotate right",
                 "A: rotate left", "S: fast drop", "SPACE: hard drop"]
@@ -595,7 +621,7 @@ line_image2 = pygame.image.load("images/line_completed2.jpg")
 
 # scoreboard rect sets the dimensions and locations of the scoreboard.
 scoreboard_surf = pygame.Surface((SEGMENT_SIZE * 6, SEGMENT_SIZE * 16 + 10))
-scoreboard_pos = (tls.center(play_surface_left, SEGMENT_SIZE * 6), play_surface_top)
+scoreboard_pos = (center(play_surface_left, SEGMENT_SIZE * 6), play_surface_top)
 scores = Score(("LEVEL:", "LINES:", "SCORE:"), [1, 0, -10], "gamedata")  # scoreboard initializes a Scoreboard object.
 scores.get_highscore()
 
@@ -603,73 +629,78 @@ scores.get_highscore()
 This segment contains variables/constants/objects for the main menu
 ________________________________________________________________________________________________________________________
 """
+# TODO: improve and streamline variables
+# TODO: create title image
+# TODO: shrink and correct menu buttons
 title_surf = title_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
-title_pos = (tls.center(screen_width, title_surf.get_width()), 110)
+title_pos = (center(screen_width, title_surf.get_width()), 110)
 copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.0", True, color_dict["white"])
-copyrite_pos = (tls.center(screen_width, copyrite_surf.get_width()), 680)
+copyrite_pos = (center(screen_width, copyrite_surf.get_width()), 680)
 menu_imgs = (pygame.image.load("images/menu_button1.jpg"), pygame.image.load("images/menu_button2.jpg"),
              pygame.image.load("images/menu_button3.jpg"), pygame.image.load("images/menu_button4.jpg"),
              pygame.image.load("images/menu_button5.jpg"), pygame.image.load("images/menu_button6.jpg"))
-button_left = tls.center(screen_width, 500)  # gets the left starint point of the button
-start_button = btn.Button(screen, (button_left, 290), menu_imgs[0], menu_imgs[1])
-help_button = btn.Button(screen, (button_left, 420), menu_imgs[2], menu_imgs[3])
-exit_button = btn.Button(screen, (button_left, 550), menu_imgs[4], menu_imgs[5])
+button_left = center(screen_width, 500)  # gets the left starting point of the button
+start_button = Button(screen, (button_left, 290), menu_imgs[0], menu_imgs[1])
+help_button = Button(screen, (button_left, 420), menu_imgs[2], menu_imgs[3])
+exit_button = Button(screen, (button_left, 550), menu_imgs[4], menu_imgs[5])
 
 
 """
 This segment contains variables/constants/objects used in the pause menu
 ________________________________________________________________________________________________________________________
 """
+# TODO: improve and sreamline menu variables
 pause_surface_size = pause_surface_width, pause_surface_height = SEGMENT_SIZE * 9, SEGMENT_SIZE * 17
 pause_surface = pygame.Surface(pause_surface_size, pygame.SRCALPHA)
 pause_surface.set_alpha(125)
-pause_surface_left, pause_surface_top = tls.center(screen_width, pause_surface_width), \
-                                       tls.center(screen_height, pause_surface_height)
-pause_button_left = tls.center(screen_width, 288)
-pause_button1 = btn.TextButton(screen, (pause_button_left, 210, 288, 80), "RESUME", color_dict["dark gray"])
-pause_button2 = btn.TextButton(screen, (pause_button_left, 310, 288, 80), "HELP", color_dict["dark gray"])
-pause_button3 = btn.TextButton(screen, (pause_button_left, 410, 288, 80), "RESTART", color_dict["dark gray"])
-pause_button4 = btn.TextButton(screen, (pause_button_left, 510, 288, 80), "QUIT", color_dict["dark gray"])
+pause_surface_left, pause_surface_top = center(screen_width, pause_surface_width), \
+                                        center(screen_height, pause_surface_height)
+pause_button_left = center(screen_width, 288)
+pause_button1 = TextButton(screen, (pause_button_left, 210, 288, 80), "RESUME", color_dict["dark gray"])
+pause_button2 = TextButton(screen, (pause_button_left, 310, 288, 80), "HELP", color_dict["dark gray"])
+pause_button3 = TextButton(screen, (pause_button_left, 410, 288, 80), "RESTART", color_dict["dark gray"])
+pause_button4 = TextButton(screen, (pause_button_left, 510, 288, 80), "QUIT", color_dict["dark gray"])
 
 
 """
 This segment contains variables/constants/objects used in the help and info section
 ________________________________________________________________________________________________________________________
 """
+# TODO: improve and streamline help and info variables
 help_border = pygame.Surface((screen_width - 120, screen_height - 120))
-help_border_left, help_border_top = tls.center(screen_width, screen_width - 120), \
-                                    tls.center(screen_height, screen_height - 120)
+help_border_left, help_border_top =  center(screen_width, screen_width - 120), \
+                                     center(screen_height, screen_height - 120)
 help_surf = banner_font.render("HELP AND INFORMATION", True, (255, 255, 255))
-help_surf_pos = (tls.center(screen_width, help_surf.get_width()), help_border_top + 10)
+help_surf_pos = ( center(screen_width, help_surf.get_width()), help_border_top + 10)
 with open("textbox", "r+") as f:
     text = f.read()
-info_box_rect = (tls.center(screen_width, screen_width - 160), tls.center(screen_height, screen_height - 200) + 20,
+info_box_rect = (center(screen_width, screen_width - 160),  center(screen_height, screen_height - 200) + 20,
                  screen_width - 160, screen_height - 200)
-info_box = btn.TextBox(screen, text, info_box_rect)
-back_button = btn.TextButton(screen, (help_border_left + 20, help_border_top + 10, 150, 40),
-                             "<< BACK", (20, 20, 20))
-strt_button = btn.TextButton(screen, ((help_border_left + screen_width - 290), help_border_top + 10, 150, 40),
-                             "START >>", (20, 20, 20))
+info_box = TextBox(screen, text, info_box_rect)
+back_button = TextButton(screen, (help_border_left + 20, help_border_top + 10, 150, 40),
+                         "<< BACK", (20, 20, 20))
+strt_button = TextButton(screen, ((help_border_left + screen_width - 290), help_border_top + 10, 150, 40),
+                         "START >>", (20, 20, 20))
 
 
 """
 This segment contains variables/constants/objects used in the game over section.
 ________________________________________________________________________________________________________________________
 """
+# TODO: improve and streamline variables for game over section
 game_over_size = game_over_width, game_over_height = SEGMENT_SIZE * 20, SEGMENT_SIZE * 15
 game_over_surface = pygame.Surface(game_over_size, pygame.SRCALPHA)
 game_over_surface.set_alpha(125)
-game_over_left, game_over_top = tls.center(screen_width, game_over_width), \
-                                       tls.center(screen_height, game_over_height)
-score_box_rect = (tls.center(screen_width, SEGMENT_SIZE * 11) - (4 * SEGMENT_SIZE) + 20, tls.center(screen_height, SEGMENT_SIZE * 13),
+game_over_left, game_over_top = center(screen_width, game_over_width), center(screen_height, game_over_height)
+score_box_rect = (center(screen_width, SEGMENT_SIZE * 11) - (4 * SEGMENT_SIZE) + 20,  center(screen_height, SEGMENT_SIZE * 13),
                   SEGMENT_SIZE * 11, SEGMENT_SIZE * 13)
 game_over_button_left, game_over_button_top = score_box_rect[0] + score_box_rect[2] + SEGMENT_SIZE,\
                                               score_box_rect[1] + score_box_rect[3] - 275
-game_over_button1 = btn.TextButton(screen, (game_over_button_left, game_over_button_top, 210, 75), "RESTART", (40, 40, 40))
-game_over_button2 = btn.TextButton(screen, (game_over_button_left, game_over_button_top + 100, 210, 75), "MAIN MENU", (40, 40, 40))
-game_over_button3 = btn.TextButton(screen, (game_over_button_left, game_over_button_top + 200, 210, 75), "EXIT", (40, 40, 40))
+game_over_button1 = TextButton(screen, (game_over_button_left, game_over_button_top, 210, 75), "RESTART", (40, 40, 40))
+game_over_button2 = TextButton(screen, (game_over_button_left, game_over_button_top + 100, 210, 75), "MENU", (40, 40, 40))
+game_over_button3 = TextButton(screen, (game_over_button_left, game_over_button_top + 200, 210, 75), "EXIT", (40, 40, 40))
 new_highscore_surf = title_font.render("NEW HIGHSCORE!", True, color_dict["white"])
-new_highscore_location = tls.center(screen_width, new_highscore_surf.get_width()), tls.center(screen_height, new_highscore_surf.get_height())
+new_highscore_location = center(screen_width, new_highscore_surf.get_width()),  center(screen_height, new_highscore_surf.get_height())
 game_surf = title_font.render("GAME", True, color_dict["white"])
 over_surf = title_font.render("OVER!", True, color_dict["white"])
 game_surf_location = score_box_rect[0] + score_box_rect[2] + SEGMENT_SIZE, score_box_rect[1]
@@ -693,11 +724,9 @@ def main_menu():  # function for the main menu
                 if pygame.key.get_mods() & pygame.KMOD_SHIFT:  # checks if user is holding modifying button
                     if event.key == pygame.K_g:
                         new_game()  # starts a new game
-                        gen_next()  # generates the next tetro starting the next, current ... next cascade
                         return "start"
                     elif event.key == pygame.K_h:
                         new_game()
-                        gen_next()
                         return "help and info"
                     elif event.key == pygame.K_x:
                         running = False
@@ -710,11 +739,9 @@ def main_menu():  # function for the main menu
 
         if start_button.update_button() and clicked:  # displays start button and checks if user has clicked
             new_game()  # see event handler doc
-            gen_next()
             return "start"  # when user clicks button
         elif help_button.update_button() and clicked:
             new_game()
-            gen_next()
             return "help and info"
         elif exit_button.update_button() and clicked:
             running = False  # ends game loop
@@ -723,11 +750,14 @@ def main_menu():  # function for the main menu
     return "exit"  # once game loop is ended and no game states are returned, program ends
 
 
+# TODO: rename start_game function
 def start_game():  # main game loop functions
     global prev_shift_time, prev_drop_time, game_over, screen_capture
+    # TODO: probably do not need running variable
     running = True
     while running:
         clock.tick(30)
+        # TODO: create multiple game loop states
         if not game_over:
             screen.blit(bg_img, (0, 0))
             update_play_surface()  # function handles surface and play surface
@@ -776,6 +806,7 @@ def start_game():  # main game loop functions
                 can be shifted. Each shift also requires that enough time has passed from its last shift (so it does
                 not instantly teleport pieces across the play surface).
                 """
+                # TODO: check if this segment can be simplified
                 if pygame.time.get_ticks() - prev_drop_time >= drop_rate:  # enough time passed to drop tetro again
                     shift_down()
                     prev_drop_time = pygame.time.get_ticks()  # update last drop time
@@ -787,6 +818,7 @@ def start_game():  # main game loop functions
                     time has passed the piece was last shifted. If conditions are met, the piece is shifted and 
                     the last shift time is updated.
                     """
+                    # TODO: check time_clicked variables scale
                     if pygame.time.get_ticks() - time_clicked_r >= KEY_DELAY \
                             and pygame.time.get_ticks() - prev_shift_time >= SHIFT_INTERVAL:
                         shift_right()
@@ -798,13 +830,13 @@ def start_game():  # main game loop functions
                         prev_shift_time = pygame.time.get_ticks()
                 if pressed_keys[pygame.K_s]:
                     if pygame.time.get_ticks() - time_clicked_s >= KEY_DELAY - 75 \
-                            and pygame.time.get_ticks() - prev_drop_time >= SHIFT_INTERVAL - 20:
-                        shift_down(3)  # Shift down is passed a 3 millisecond argument to extend the grace period
+                            and (pygame.time.get_ticks() - prev_drop_time) >= (SHIFT_INTERVAL - 25):
+                        shift_down(5)  # Shift down is passed a 3 millisecond argument to extend the grace period
                         prev_drop_time = pygame.time.get_ticks()
             else:
                 """
                 When dropped equals or exceeds grace period the a series of functions are called to generate a new
-                piece, update scores, check for filledl lines, etc.
+                piece, update scores, check for filled lines, etc.
                 """
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -814,6 +846,7 @@ def start_game():  # main game loop functions
                 update_score()  # updates score attributes
                 difficulty_level()  # increases difficulty when necessary
                 filled_lines_handler()  # empties filled rows and shifts other rows to their new position
+                # TODO: create function to lower line
                 new_tetro()  # generate a new tetro and new upcoming tetro
         else:
             screen_capture = pygame.Surface.copy(screen)  # gets copy of current screen
@@ -822,6 +855,7 @@ def start_game():  # main game loop functions
 
 
 def pause_menu():  # pause menu loop
+    # TODO: create pause menu shortcuts
     running = True
     while running:
         for event in pygame.event.get():
@@ -838,10 +872,11 @@ def pause_menu():  # pause menu loop
             return "start"
         elif pause_button2.update_button():
             return "help and info"
+        # TODO: double check if user wants to restart
         elif pause_button3.update_button():
             new_game()
-            gen_next()
             return "start"
+        # TODO: double check if user wants to quit game
         elif pause_button4.update_button():
             return "main menu"
         pygame.display.flip()
@@ -849,12 +884,13 @@ def pause_menu():  # pause menu loop
 
 
 def gameover():  # game over loop
+    # TODO: create gameover shortcuts
     if scores.highscore < scores.score_list[2]:  # checks if player has achieved new high score
         scores.set_highscore(scores.score_list[2])
 
     with open("gamedata", "r") as infile:
         score_text = infile.read()
-    score_box = btn.TextBox(screen, score_text, score_box_rect)
+    score_box = TextBox(screen, score_text, score_box_rect)
 
     running = True
     while running:
@@ -864,7 +900,6 @@ def gameover():  # game over loop
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     new_game()
-                    gen_next()
                     return "start"
         game_over_surface.fill(color_dict["white"])
         screen.blit(screen_capture, (0, 0))
@@ -872,7 +907,6 @@ def gameover():  # game over loop
         score_box.update_box()
         if game_over_button1.update_button():
             new_game()
-            gen_next()
             return "start"
         if game_over_button2.update_button():
             return "main menu"
@@ -929,6 +963,8 @@ game over, menu), and the game state is controlled by a return variable within e
 a new function.
 """
 game_state = "main menu"
+# TODO: create loading state
+# TODO: create ready state
 while True:
     if game_state == "main menu":
         game_state = main_menu()
