@@ -798,6 +798,7 @@ def start_game():  # main game loop functions
                             ccw_rotation()
                         elif event.key == pygame.K_SPACE:
                             hard_drop()  # instantly drops tetromino
+
                 """
                 Pygame's set_repeat function cannot be used here because some buttons do not have a hold down feature.
                 Instead, this program uses Pygame's get_ticks to compare times and mimics the set_repeat feature.
