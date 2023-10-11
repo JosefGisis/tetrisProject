@@ -193,21 +193,19 @@ def difficulty_level():  # this function checks if the game difficulty should be
 
 # TODO: improve line completion animations
 def line_animation():  # temporary function
+    white_surface = pygame.Surface((SEGMENT_SIZE - 1, SEGMENT_SIZE - 1), pygame.SRCALPHA)
     filled_lines = get_lines()
     if not game_over:
         if filled_lines:
-            for h in range(3):
-                for j in range(45):
-                    # TODO: vary letter variables
-                    for i in filled_lines:
-                        screen.blit(line_image1, (center(screen_width, play_surface_width),
-                                    (i * SEGMENT_SIZE + center(screen_height, play_surface_height))))
-                    pygame.display.flip()
-                for j in range(45):
-                    for i in filled_lines:
-                        screen.blit(line_image2, (((screen_width - play_surface_width) // 2),
-                                    (i * SEGMENT_SIZE + ((screen_height - play_surface_height) // 2))))
-                    pygame.display.flip()
+            for h in range(25, 255, 2):
+                update_play_surface()
+                white_surface.set_alpha(h)
+                white_surface.fill(color_dict["white"])
+                for k in filled_lines:
+                    for l in range(10):
+                        screen.blit(white_surface, (center(screen_width, play_surface_width) + l * SEGMENT_SIZE,
+                                            (k * SEGMENT_SIZE + center(screen_height, play_surface_height))))
+                pygame.display.flip()
 
 
 """
@@ -766,7 +764,6 @@ def start_game():  # main game loop functions
             display_next()  # display upcoming tetromino surface
             display_keys()  # display key instructions
             display_scoreboard()  # display scoreboard object
-            pygame.display.flip()
             """
             if dropped checks to see if the tetro has landed yet by comparing dropped to grace period (drop is
             incremented whenever the falling tetromino is blocked). If dropped does not equal or exceed grace period,
@@ -840,9 +837,6 @@ def start_game():  # main game loop functions
                 When dropped equals or exceeds grace period the a series of functions are called to generate a new
                 piece, update scores, check for filled lines, etc.
                 """
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        running = False
                 check_pos()  # checks position of landed segments and assigns them to the correct group
                 line_animation()  # destroyed line animation for filled lines
                 update_score()  # updates score attributes
@@ -850,6 +844,7 @@ def start_game():  # main game loop functions
                 filled_lines_handler()  # empties filled rows and shifts other rows to their new position
                 # TODO: create function to lower line
                 new_tetro()  # generate a new tetro and new upcoming tetro
+            pygame.display.flip()
         else:
             screen_capture = pygame.Surface.copy(screen)  # gets copy of current screen
             return "game over"
