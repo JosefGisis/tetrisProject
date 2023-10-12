@@ -504,7 +504,7 @@ ________________________________________________________________________________
 pygame.init()
 # TODO: find a way to make screen resizeable
 display_size = screen_width, screen_height = (1000, 800)
-screen = pygame.display.set_mode(display_size)
+screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("TITLE PLACEHOLDER")
 clock = pygame.time.Clock()  # creates a Pygame clock object
 
@@ -751,7 +751,7 @@ def main_menu():  # function for the main menu
 
 
 # TODO: rename start_game function
-def start_game():  # main game loop functions
+def game_loop:  # main game loop functions
     global prev_shift_time, prev_drop_time, game_over, screen_capture
     # TODO: probably do not need running variable
     running = True
@@ -970,7 +970,7 @@ while True:
     elif game_state == "help and info":
         game_state = help_and_info()
     elif game_state == "start":
-        game_state = start_game()
+        game_state = game_loop()
     elif game_state == "pause menu":
         game_state = pause_menu()
     elif game_state == "game over":
