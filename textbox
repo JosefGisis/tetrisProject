@@ -56,10 +56,12 @@ VERSION INFORMATION
 ______________________
 
 v 1.0:
-Base version with minimal features.
+> Base version with minimal features.
 
 v 1.1:
-Improved graphics for tetrominos, main menu, and pause menu.
+> Improved graphics for tetrominos, main menu, and pause menu.
+> Improved gameplay features and settings.
+> Corrected bugs.
 
 
 DEVELOPMENT INFORMATION
