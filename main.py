@@ -45,6 +45,7 @@ class Score:  # this is the scoreboard object that tracks scores
     def reset_score(self):  # resets the scoreboard
         self.score_list = [score for score in self.default_scores]
 
+
 """
 The following functions and classes are responsible for creating, managing and handling current and next tetrominos.
 This is the segment class for all tetrominos. Throughout the program, segment refers to all of the four parts each     
@@ -184,15 +185,16 @@ def update_score():
 
 def difficulty_level():  # this function checks if the game difficulty should be increased
     global drop_rate, grace_period
-    if scores.score_list[0] < scores.score_list[1] // 10 + 1:  # level increases every 10 filled rows
-        # TODO: drop rate should slow down once a certain speed is hit
-        drop_rate -= 20  # increase drop speed
-        # TODO: grace period should match speed increase
-        grace_period += 6  # proportionally increase grace period
-        scores.score_list[0] = scores.score_list[1] // 10 + 1
+    if scores.score_list[0] < scores.score_list[1]:  # level increases every 10 filled rows
+        if drop_rate > 100:
+            drop_rate -= 20  # increase drop speed
+            grace_period += 6  # proportionally increase grace period
+        else:
+            drop_rate -= 10
+            grace_period += 12
+        scores.score_list[0] = scores.score_list[1]
 
 
-# TODO: improve line completion animations
 def line_animation():  # temporary function
     white_surface = pygame.Surface((SEGMENT_SIZE - 1, SEGMENT_SIZE - 1), pygame.SRCALPHA)
     filled_lines = get_lines()
@@ -364,7 +366,6 @@ def cw_rotation():
     if current_letter != O_PIECE and dropped < grace_period:
         rotated_letter = [[current_letter[j][i] for j in range(len(current_letter))]
                           for i in range(len(current_letter[0]))]
-        # TODO: list shadows built in function
         for matrix in rotated_letter:
             matrix.reverse()
         gen_tetro(rotated_letter, current_surface)
@@ -543,7 +544,7 @@ ________________________________________________________________________________
 # TODO: shrink and correct menu buttons
 title_surf = title_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
 title_pos = (center(screen_width, title_surf.get_width()), 110)
-copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.1", True, color_dict["white"])
+copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.2", True, color_dict["white"])
 copyrite_pos = (center(screen_width, copyrite_surf.get_width()), 680)
 menu_imgs = (pygame.image.load("images/menu_button1.png"), pygame.image.load("images/menu_button2.png"),
              pygame.image.load("images/menu_button3.png"), pygame.image.load("images/menu_button4.png"),
@@ -607,7 +608,6 @@ rotation_state = 0  # falling tetromino's degree of rotation (0: 0, 1: 90, 2: 18
 tetro_left, tetro_top = (3 * SEGMENT_SIZE), (-2 * SEGMENT_SIZE)  # falling tetromino's leftmost and topmost position
 animation_count = animation_length = 10  # around one sixth of a second
 
-# TODO: some of these variables may be redundant
 KEY_DELAY = 150  # used to delay hold down button feature. Literal represents milliseconds
 SHIFT_INTERVAL = 60  # interval to slow tetro movement
 prev_shift_time = 50  # tracks previous movement time for comparison with SHIFT_INTERVAL
@@ -866,7 +866,7 @@ def game_loop():  # main game loop functions
 
 
 def pause_menu():  # pause menu loop
-    # TODO: create pause menu shortcuts
+    clicked = False
     running = True
     while running:
         for event in pygame.event.get():
@@ -875,28 +875,37 @@ def pause_menu():  # pause menu loop
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return "start"
+                elif pygame.key.get_mods() & pygame.KMOD_SHIFT:  # checks if user is holding modifying button
+                    if event.key == pygame.K_r:
+                        new_game()  # starts a new game
+                        return "start"
+                    elif event.key == pygame.K_h:
+                        return "help and info"
+                    elif event.key == pygame.K_m:
+                        return "main menu"
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                clicked = True
 
         pause_surface.fill(color_dict["white"])
         screen.blit(screen_capture, (0, 0))
         screen.blit(pause_surface, (pause_surface_location[0], pause_surface_location[1]))
         screen.blit(paused_text_surf, paused_text_pos)
-        if pause_button1.update_button():
+        if pause_button1.update_button() and clicked:
             return "start"
-        elif pause_button2.update_button():
+        elif pause_button2.update_button() and clicked:
             return "help and info"
         # TODO: double check if user wants to restart
-        elif pause_button3.update_button():
+        elif pause_button3.update_button() and clicked:
             new_game()
             return "start"
         # TODO: double check if user wants to quit game
-        elif pause_button4.update_button():
+        elif pause_button4.update_button() and clicked:
             return "main menu"
         pygame.display.flip()
     return "exit"
 
 
 def gameover():  # game over loop
-    # TODO: create gameover shortcuts
     if scores.highscore < scores.score_list[2]:  # checks if player has achieved new high score
         scores.set_highscore(scores.score_list[2])
 
@@ -904,6 +913,7 @@ def gameover():  # game over loop
         score_text = gfile.read()
     score_box = TextBox(screen, score_text, score_box_rect)
 
+    clicked = False
     running = True
     while running:
         for event in pygame.event.get():
@@ -913,16 +923,23 @@ def gameover():  # game over loop
                 if event.key == pygame.K_ESCAPE:
                     new_game()
                     return "start"
+                elif pygame.key.get_mods() & pygame.KMOD_SHIFT:  # checks if user is holding modifying button
+                    if event.key == pygame.K_m:
+                        return "main menu"
+                    elif event.key == pygame.K_x:
+                        running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                clicked = True
         gameover_surface.fill(color_dict["white"])
         screen.blit(screen_capture, (0, 0))
         screen.blit(gameover_surface, gameover_surface_location)
         score_box.update_box()
-        if gameover_button1.update_button():
+        if gameover_button1.update_button() and clicked:
             new_game()
             return "start"
-        if gameover_button2.update_button():
+        if gameover_button2.update_button() and clicked:
             return "main menu"
-        if gameover_button3.update_button():
+        if gameover_button3.update_button() and clicked:
             return "exit"
         screen.blit(game_text_surf, game_text_location)
         screen.blit(over_text_surf, over_text_location)
@@ -932,6 +949,7 @@ def gameover():  # game over loop
 
 def help_and_info():  # help and info state function
     screen.blit(bg_img, (0, 0))
+    clicked = False
     running = True
     while running:
         for event in pygame.event.get():
@@ -951,18 +969,22 @@ def help_and_info():  # help and info state function
                     info_box.scroll(12)
                 elif event.key == pygame.K_UP:
                     info_box.scroll(-12)
-                if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                elif pygame.key.get_mods() & pygame.KMOD_SHIFT:  # checks if user is holding modifying button
                     if event.key == pygame.K_g:
                         return "start"
+                    elif event.key == pygame.K_m:
+                        return "main menu"
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                clicked = True
 
         screen.blit(help_border, help_border_location)
         screen.blit(help_text_surf, help_text_pos)
         info_box.update_box()
-        if back_button.update_button():
+        if back_button.update_button() and clicked:
             info_box.text_top = 20  # resets text and scroll location on returning from menu
             info_box.scroll_top = 20
             return "main menu"
-        elif strt_button.update_button():
+        elif strt_button.update_button() and clicked:
             return "start"
         pygame.display.flip()
     return "exit"
