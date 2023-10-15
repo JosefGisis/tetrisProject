@@ -13,16 +13,19 @@ from datetime import datetime
 class Score:  # this is the scoreboard object that tracks scores
     def __init__(self, banner_list, score_list, file):
         self.score_list = score_list  # assigns scores
+        self.default_scores = score_list  # creates default score for each new game
         self.banner_list = banner_list  # displayed banners
         self.highscore_banner = "HIGHSCORE:"
         self.highscore = 0
-        # TODO: find a way to prevent users from altering scores
         self.file = file
 
     def get_highscore(self):
-        # TODO: what happens if there is no file self.file?
-        with open(self.file, "r") as infile:
-            first_entry = infile.readline()  # retrieves first entry which is latest highscore
+        try:
+            with open(self.file, "r") as tfile:  # tfile for try file
+                first_entry = tfile.readline()  # retrieves first entry which is latest highscore
+        except FileNotFoundError:
+            with open(self.file, "a+") as efile:  # efile for except file
+                first_entry = efile.readline()  # retrieves first entry which is latest highscore
         if first_entry:  # if there is highscore, retrieves last word of first entry (the highscore)
             self.highscore = int(first_entry.split(" ")[-1].strip("\n"))
         else:  # defaults to 0
@@ -34,16 +37,13 @@ class Score:  # this is the scoreboard object that tracks scores
             highscores = infile.readlines()  # retrieves highscores
         current_time = datetime.now()
         formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")  # removes milliseconds
-        # TODO: ensure large scores does not throw an exception
-        new_entry = "{0} {1:-> 15}\n".format(formatted_time, self.highscore)  # formats new highscore
+        new_entry = "{0} {1:-> 14}\n".format(formatted_time, self.highscore)  # formats new highscore
         highscores.insert(0, new_entry)  # places new highscore at beginning of list
         with open(self.file, "w") as outfile:
             outfile.writelines(highscores)
 
-    # TODO: reformat to remove parameters
-    def reset_score(self, score_list):  # resets the scoreboard
-        self.score_list = score_list
-
+    def reset_score(self):  # resets the scoreboard
+        self.score_list = [score for score in self.default_scores]
 
 """
 The following functions and classes are responsible for creating, managing and handling current and next tetrominos.
@@ -73,7 +73,7 @@ def new_game():
     dropped = grace_period = 30
     drop_rate = 250
     time_clicked_r = time_clicked_l = time_clicked_s = 0
-    scores.reset_score([1, 0, -10])
+    scores.reset_score()
     for row in dropped_segments:
         row.empty()  # erases all the segments on the play surfaces
     gen_next()  # starts the next, current, next ... cycle
@@ -480,11 +480,11 @@ def display_scoreboard():
     """
     scoreboard_surface.fill(color_dict["black"])
     # TODO: improve score_list and banner_list
-    score_list = (scores.highscore, scores.score_list[0], scores.score_list[1], scores.score_list[2])
-    banner_list = (scores.highscore_banner, scores.banner_list[0], scores.banner_list[1], scores.banner_list[2])
-    for index, banner in enumerate(banner_list):
+    scores_list = (scores.highscore, scores.score_list[0], scores.score_list[1], scores.score_list[2])
+    banners_list = (scores.highscore_banner, scores.banner_list[0], scores.banner_list[1], scores.banner_list[2])
+    for index, banner in enumerate(banners_list):
         banner_surface = banner_font.render(banner, True, (255, 255, 255))
-        score_surface = score_font.render(str(score_list[index]), True, (175, 100, 255))
+        score_surface = score_font.render(str(scores_list[index]), True, (175, 100, 255))
         # TODO: ensure large scores do not go off screen
         scoreboard_surface.blit(banner_surface, (10, ((index * 4 * SEGMENT_SIZE) + 10)))  # text 10 pixels from border
         scoreboard_surface.blit(score_surface, (10, ((2 * SEGMENT_SIZE) + (index * 4 * SEGMENT_SIZE) + 10)))
@@ -900,8 +900,8 @@ def gameover():  # game over loop
     if scores.highscore < scores.score_list[2]:  # checks if player has achieved new high score
         scores.set_highscore(scores.score_list[2])
 
-    with open("gamedata", "r") as infile:
-        score_text = infile.read()
+    with open("gamedata", "r") as gfile:  # gfile for gameover file
+        score_text = gfile.read()
     score_box = TextBox(screen, score_text, score_box_rect)
 
     running = True
