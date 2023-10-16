@@ -5,6 +5,9 @@ structures each tetromino shape, and surface (regarding segments) refers to imag
 their appearance and give them colors.
 """
 import random
+
+import pygame
+
 from surfaces import*
 from tools import center
 from datetime import datetime
@@ -522,9 +525,12 @@ ________________________________________________________________________________
 pygame.init()
 # TODO: find a way to make screen resizeable
 display_size = screen_width, screen_height = (1000, 800)
-screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
+flags = pygame.RESIZABLE | pygame.SCALED
+screen = pygame.display.set_mode((screen_width, screen_height), flags)
 pygame.display.set_caption("TITLE PLACEHOLDER")
+bg_img = pygame.transform.scale(pygame.image.load("images/bg.jpg"), display_size)  # bg image used throughout the game
 clock = pygame.time.Clock()  # creates a Pygame clock object
+
 
 """
 This segment contains variables/constants/objects used throughout the program
@@ -539,7 +545,6 @@ title_font = pygame.font.SysFont(main_font, 80)  # large font for titles
 score_font = pygame.font.SysFont(main_font, 40)  # font for game scores
 banner_font = pygame.font.SysFont(main_font, 35)  # banner font
 keys_font = pygame.font.SysFont(main_font, 18)  # font for keys instructions
-bg_img = pygame.transform.scale(pygame.image.load("images/bg.jpg"), display_size)  # bg image used throughout the game
 
 """
 This segment contains variables/constants/objects for the main menu
@@ -704,6 +709,8 @@ back_button = TextButton(screen, (help_border_location[0] + SEGMENT_SIZE, help_b
 strt_button = TextButton(screen, ((help_border_location[0] + help_border_size[0] - 5 * SEGMENT_SIZE),
                                   help_border_location[1] + 10, 4 * SEGMENT_SIZE, 40),
                          "START >>", color_dict["darker gray"])
+
+
 
 """
 Game state functions 
@@ -892,6 +899,7 @@ def pause_menu():  # pause menu loop
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 clicked = True
 
+
         pause_surface.fill(color_dict["white"])
         screen.blit(screen_capture, (0, 0))
         screen.blit(pause_surface, (pause_surface_location[0], pause_surface_location[1]))
@@ -954,7 +962,6 @@ def gameover():  # game over loop
 
 
 def help_and_info():  # help and info state function
-    screen.blit(bg_img, (0, 0))
     clicked = False
     running = True
     while running:
@@ -962,6 +969,7 @@ def help_and_info():  # help and info state function
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                clicked = True
                 if event.button == 4:
                     info_box.scroll(-5)
                 elif event.button == 5:
@@ -980,9 +988,8 @@ def help_and_info():  # help and info state function
                         return "start"
                     elif event.key == pygame.K_m:
                         return "main menu"
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                clicked = True
 
+        screen.blit(bg_img, (0, 0))
         screen.blit(help_border, help_border_location)
         screen.blit(help_text_surf, help_text_pos)
         info_box.update_box()
