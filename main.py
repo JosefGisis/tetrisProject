@@ -185,26 +185,25 @@ def update_score():
 
 def difficulty_level():  # this function checks if the game difficulty should be increased
     global drop_rate, grace_period
-    if scores.score_list[0] < scores.score_list[1]:  # level increases every 10 filled rows
+    if scores.score_list[0] < scores.score_list[1] // 10 + 1:  # level increases every 10 filled rows
         if drop_rate > 100:
             drop_rate -= 20  # increase drop speed
             grace_period += 6  # proportionally increase grace period
         else:
             drop_rate -= 10
             grace_period += 12
-        scores.score_list[0] = scores.score_list[1]
+        scores.score_list[0] = scores.score_list[1] // 10 + 1
 
 
 def line_animation():  # temporary function
-    white_surface = pygame.Surface((SEGMENT_SIZE - 1, SEGMENT_SIZE - 1), pygame.SRCALPHA)
     filled_lines = get_lines()
     if not game_over:
         if filled_lines:
-            white_surface.set_alpha(25)
-            white_surface.fill(color_dict["white"])
+            white_square.set_alpha(25)
+            white_square.fill(color_dict["white"])
             for k in filled_lines:
                 for l in range(10):
-                    screen.blit(white_surface, (center(screen_width, play_surface_size[0]) + l * SEGMENT_SIZE,
+                    screen.blit(white_square, (center(screen_width, play_surface_size[0]) + l * SEGMENT_SIZE,
                                                 (k * SEGMENT_SIZE + center(screen_height, play_surface_size[1]))))
             pygame.display.flip()
 
@@ -307,9 +306,9 @@ accelerated descent button after the tetro has dropped, the grace period will st
 def shift_down(increment=10):  # default increment of 10
     global dropped, tetro_top
     if move_blocked(0, SEGMENT_SIZE):
-        # TODO: create visual indication of blocked pieces
         dropped += increment  # when dropped = increment the piece will have landed and a new piece will be generated
     else:
+        dropped = 0
         for segment in current_tetro.sprites():
             segment.rect.top += SEGMENT_SIZE
         tetro_top += SEGMENT_SIZE
@@ -320,7 +319,7 @@ def hard_drop():  # this function instantly drops the tetromino
     while not move_blocked(0, SEGMENT_SIZE):  # while tetro has not hit the bottom yet
         shift_down()
         # TODO: find a way to allow hard drop after blocked and before dropped
-        dropped = grace_period  # no grace period is given
+    dropped = grace_period  # no grace period is given
 
 
 """
@@ -463,6 +462,12 @@ def ccw_rotation():
 def update_play_surface():
     play_surface.fill(color_dict["black"])
     current_tetro.draw(play_surface)  # uses sprite group to draw the current tetromino
+    if 0 < dropped < grace_period:
+        border_color = [rgb + 50 if rgb < 205 else 255 for rgb in  # creates border color based on segment center color
+                        current_tetro.sprites()[0].image.get_at((SEGMENT_SIZE // 2, SEGMENT_SIZE // 2))]
+        for segment in current_tetro:  # creates grace period indication
+            pygame.draw.rect(play_surface, border_color,
+                             (segment.rect.left, segment.rect.top, SEGMENT_SIZE - 2, SEGMENT_SIZE - 2), 3)
     for row in dropped_segments:
         row.draw(play_surface)  # draws all the fallen pieces
     # Border is given one more pixel top and left because tetris pieces do not have borders top and left
@@ -606,6 +611,7 @@ current_letter = current_surface = 0  # falling tetromino's letter shape and ass
 next_letter = next_surface = 0  # next tetromino's letter shape and next tetromino's surface/color
 rotation_state = 0  # falling tetromino's degree of rotation (0: 0, 1: 90, 2: 180, 3: 270)
 tetro_left, tetro_top = (3 * SEGMENT_SIZE), (-2 * SEGMENT_SIZE)  # falling tetromino's leftmost and topmost position
+white_square = pygame.Surface((SEGMENT_SIZE - 2, SEGMENT_SIZE - 2), pygame.SRCALPHA)
 animation_count = animation_length = 10  # around one sixth of a second
 
 KEY_DELAY = 150  # used to delay hold down button feature. Literal represents milliseconds
@@ -831,7 +837,6 @@ def game_loop():  # main game loop functions
                 """
                 check_pos()  # checks position of landed segments and assigns them to the correct group
                 update_score()  # updates score attributes
-                difficulty_level()  # increases difficulty when necessary
 
                 # Creates a loop animation to destroy filled lines. User input is accepted during this loop.
                 if get_lines():
@@ -857,6 +862,7 @@ def game_loop():  # main game loop functions
                             game_over = True
                     shift_rows_down(9)
 
+                difficulty_level()  # increases difficulty when necessary
                 new_tetro()  # generate a new tetro and new upcoming tetro
             pygame.display.flip()
         else:
