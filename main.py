@@ -5,9 +5,7 @@ structures each tetromino shape, and surface (regarding segments) refers to imag
 their appearance and give them colors.
 """
 import random
-
 import pygame
-
 from surfaces import*
 from tools import center
 from datetime import datetime
@@ -117,7 +115,7 @@ def gen_next():
     Next_letter is picked from the list of letters and the program retrieves the correct segment surface by getting the
     letter's index and matching it to a parallel tuple.
     """
-    # TODO: this randomizer does not seem to work that great
+    # TODO: use random.shuffle to make a tetris bag
     next_letter = random.choice(TETRO_LETTERS)
     next_surface = TETRO_SURFACES[TETRO_LETTERS.index(next_letter)]
     """
@@ -340,20 +338,18 @@ Do not alter any check lists. Lists are calibrated to ensure tetrominos do not e
 with dropped tetrominos.
 """
 
-# TODO: try different wallkick pattern and experiment
-# TODO: maybe relocate wallkick lists
 
-cw_check = [[[0, 1], [-1, -1], [2, 0], [-1, -1], [0, 1]], [[1, 0], [-1, 1], [0, -2], [-1, 1], [1, 0]],
-            [[0, -1], [1, 1], [-2, 0], [1, 1], [0, -1]], [[-1, 0], [1, -1], [0, 2], [1, -1], [-1, 0]]]
+cw_check = [[[0, 1], [-1, 0], [1, -3], [-1, 0], [1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
+            [[1, 0], [0, 1], [-1, -3], [1, 0], [-1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
 
-cw_ipiece_check = [[[0, 2], [0, -3], [-2, 1], [3, 0], [-1, 0]], [[2, 0], [-3, 0], [1, 2], [0, -3], [0, 1]],
-                   [[0, -2], [0, 3], [2, -1], [-3, 0], [1, 0]], [[-2, 0], [3, 0], [-1, -2], [0, 3], [0, -1]]]
+cw_ipiece_check = [[[0, 2], [1, -2], [-3, -1], [3, 3], [-1, -2]], [[-1, 0], [3, 0], [-3, 2], [3, -3], [-2, 1]],
+                   [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]], [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]]]
 
-ccw_check = [[[0, 1], [1, -1], [-2, 0], [1, -1], [0, 1]], [[1, 0], [-1, -1], [0, 2], [-1, -1], [1, 0]],
-             [[0, -1], [-1, 1], [2, 0], [-1, 1], [0, -1]], [[-1, 0], [1, 1], [0, -2], [1, 1], [-1, 0]]]
+ccw_check = [[[0, 1], [1, 0], [-1, -3], [1, 0], [-1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
+             [[-1, 0], [0, 1], [1, -3], [-1, 0], [1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
 
-ccw_ipiece_check = [[[0, 2], [0, -3], [2, 1], [-3, 0], [1, 0]], [[2, 0], [-3, 0], [1, -2], [0, 3], [0, -1]],
-                    [[0, -2], [0, 3], [-2, -1], [3, 0], [-1, 0]], [[-2, 0], [3, 0], [-1, 2], [0, -3], [0, 1]]]
+ccw_ipiece_check = [[[0, 2], [-1, -2], [0, 2], [3, -3], [-2, 1]], [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]],
+                    [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]], [[-2, 0], [3, 0], [-3, -1], [3, 3], [-1, -2]]]
 
 """
 See README file for a detailed explanation of the rotation functions.
@@ -488,7 +484,6 @@ def display_scoreboard():
     :return:
     """
     scoreboard_surface.fill(color_dict["black"])
-    # TODO: improve score_list and banner_list
     scores_list = (scores.highscore, scores.score_list[0], scores.score_list[1], scores.score_list[2])
     banners_list = (scores.highscore_banner, scores.banner_list[0], scores.banner_list[1], scores.banner_list[2])
     for index, banner in enumerate(banners_list):
