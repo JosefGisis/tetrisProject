@@ -531,7 +531,6 @@ pygame.display.set_caption("TITLE PLACEHOLDER")
 bg_img = pygame.transform.scale(pygame.image.load("images/bg.jpg"), display_size)  # bg image used throughout the game
 clock = pygame.time.Clock()  # creates a Pygame clock object
 
-
 """
 This segment contains variables/constants/objects used throughout the program
 ________________________________________________________________________________________________________________________
@@ -665,6 +664,12 @@ pause_button1 = TextButton(screen, (pause_button_left, 255, 288, 80), "RESUME", 
 pause_button2 = TextButton(screen, (pause_button_left, 355, 288, 80), "HELP", color_dict["dark gray"])
 pause_button3 = TextButton(screen, (pause_button_left, 455, 288, 80), "RESTART", color_dict["dark gray"])
 pause_button4 = TextButton(screen, (pause_button_left, 555, 288, 80), "QUIT", color_dict["dark gray"])
+warning_box_rect = (center(screen_width, SEGMENT_SIZE * 12),
+                    center(screen_height, SEGMENT_SIZE * 9), SEGMENT_SIZE * 12, SEGMENT_SIZE * 9)
+restart_warning_box = WarningBox(screen, warning_box_rect, "RESTART GAME?")
+quit_warning_box = WarningBox(screen, warning_box_rect, "QUIT GAME?")
+ok_button = TextButton(screen, restart_warning_box.button1_rect(), "OK", color_dict["darker purple"])
+cancel_button = TextButton(screen, restart_warning_box.button2_rect(), "CANCEL", color_dict["darker purple"])
 
 """
 This segment contains variables/constants/objects used in the game over section.
@@ -709,8 +714,6 @@ back_button = TextButton(screen, (help_border_location[0] + SEGMENT_SIZE, help_b
 strt_button = TextButton(screen, ((help_border_location[0] + help_border_size[0] - 5 * SEGMENT_SIZE),
                                   help_border_location[1] + 10, 4 * SEGMENT_SIZE, 40),
                          "START >>", color_dict["darker gray"])
-
-
 
 """
 Game state functions 
@@ -879,42 +882,78 @@ def game_loop():  # main game loop functions
 
 
 def pause_menu():  # pause menu loop
+    if scores.highscore < scores.score_list[2]:  # saves players high score
+        scores.set_highscore(scores.score_list[2])
+    selection = None  # controls exit warning message states
     clicked = False
     running = True
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return "start"
-                elif pygame.key.get_mods() & pygame.KMOD_SHIFT:  # checks if user is holding modifying button
-                    if event.key == pygame.K_r:
-                        new_game()  # starts a new game
+        if not selection:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
                         return "start"
-                    elif event.key == pygame.K_h:
-                        return "help and info"
-                    elif event.key == pygame.K_m:
+                    elif pygame.key.get_mods() & pygame.KMOD_SHIFT:  # checks if user is holding modifying button
+                        if event.key == pygame.K_r:
+                            new_game()  # starts a new game
+                            return "start"
+                        elif event.key == pygame.K_h:
+                            return "help and info"
+                        elif event.key == pygame.K_m:
+                            return "main menu"
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    clicked = True
+
+            pause_surface.fill(color_dict["white"])
+            screen.blit(screen_capture, (0, 0))
+            screen.blit(pause_surface, (pause_surface_location[0], pause_surface_location[1]))
+            screen.blit(paused_text_surf, paused_text_pos)
+            if pause_button1.update_button() and clicked:
+                return "start"
+            elif pause_button2.update_button() and clicked:
+                return "help and info"
+            elif pause_button3.update_button() and clicked:
+                selection = "restart"
+            elif pause_button4.update_button() and clicked:
+                selection = "back to menu"
+            pause_button3.update_button()  # pause buttons need to be updates in case they are selected
+            pause_button4.update_button()
+
+        elif selection == "restart":
+            for event in pygame.event.get():  # so player can exit during exit warning messages
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_KP_ENTER:
+                        new_game()
+                        return "start"
+                    elif event.key == pygame.K_ESCAPE:
+                        selection = None
+
+            restart_warning_box.display_box()  # displays restart warning
+            if ok_button.update_button():
+                new_game()
+                return "start"
+            elif cancel_button.update_button():
+                selection = None
+
+        elif selection == "back to menu":
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_KP_ENTER:
                         return "main menu"
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                clicked = True
+                    elif event.key == pygame.K_ESCAPE:
+                        selection = None
 
-
-        pause_surface.fill(color_dict["white"])
-        screen.blit(screen_capture, (0, 0))
-        screen.blit(pause_surface, (pause_surface_location[0], pause_surface_location[1]))
-        screen.blit(paused_text_surf, paused_text_pos)
-        if pause_button1.update_button() and clicked:
-            return "start"
-        elif pause_button2.update_button() and clicked:
-            return "help and info"
-        # TODO: double check if user wants to restart
-        elif pause_button3.update_button() and clicked:
-            new_game()
-            return "start"
-        # TODO: double check if user wants to quit game
-        elif pause_button4.update_button() and clicked:
-            return "main menu"
+            quit_warning_box.display_box()
+            if ok_button.update_button():
+                return "main menu"
+            elif cancel_button.update_button():
+                selection = None
         pygame.display.flip()
     return "exit"
 

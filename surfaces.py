@@ -87,12 +87,12 @@ class TextButton:
         mouse_posx, mouse_posy = pygame.mouse.get_pos()
         mouse_pos = mouse_posx - self.relative_pos[0], mouse_posy - self.relative_pos[1]
         if self.left <= mouse_pos[0] <= self.right and self.top <= mouse_pos[1] <= self.bottom:
-            self.button_surf.fill((self.color2))
+            self.button_surf.fill(self.color2)
             if pygame.mouse.get_pressed()[0] and not self.clicked:
                 self.clicked = True
                 return True
         else:
-            self.button_surf.fill((self.color1))
+            self.button_surf.fill(self.color1)
         self.button_surf.blit(self.text_surf, (self.text_left, self.text_top))
         self.surface.blit(self.button_surf, (self.left, self.top))
         if pygame.mouse.get_pressed()[0]:
@@ -116,6 +116,7 @@ class WarningBox:  # warning dialogue box class
         self.msg_left, self.msg_top = (self.width - self.msg_surf.get_width()) // 2, int(0.2 * self.height)
 
     def display_box(self):  # displays warning box
+        self.box.fill((0, 0, 0))
         self.box.blit(self.msg_surf, (self.msg_left, self.msg_top))
         self.surface.blit(self.box, (self.left, self.top))
 
@@ -123,14 +124,14 @@ class WarningBox:  # warning dialogue box class
         # button width is 1/4 width and 1/8 the height of the warning box
         button_width, button_height = self.width // 4, self.height // 8
         # left is determined by dividing the warning box width into 20 segments and placing buttons at intervals
-        button1_left = (self.width // 20) * 4
-        button_top = (self.height // 8) * 5
+        button1_left = (self.width // 20) * 4 + self.left
+        button_top = (self.height // 8) * 5 + self.top
         return button1_left, button_top, button_width, button_height
 
     def button2_rect(self):  # returns rect of of two of two optional buttons
         button_width, button_height = self.width // 4, self.height // 8
-        button2_left = (self.width // 20) * 11
-        button_top = (self.height // 8) * 5
+        button2_left = (self.width // 20) * 11 + self.left
+        button_top = (self.height // 8) * 5 + self.top
         return button2_left, button_top, button_width, button_height
 
 
