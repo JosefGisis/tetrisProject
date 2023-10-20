@@ -4,11 +4,11 @@ short for tetromino, segment refers to one of the four parts of each tetromino, 
 structures each tetromino shape, and surface (regarding segments) refers to images displayed on each segment to enhance
 their appearance and give them colors.
 """
-import random
-import pygame
+#import pygame
 from surfaces import*
 from tools import center
 from datetime import datetime
+from random import shuffle, choice
 
 
 class Score:  # this is the scoreboard object that tracks scores
@@ -22,6 +22,7 @@ class Score:  # this is the scoreboard object that tracks scores
 
     def get_highscore(self):
         try:
+            # TODO: look into descriptor based files for locking
             with open(self.file, "r") as tfile:  # tfile for try file
                 first_entry = tfile.readline()  # retrieves first entry which is latest highscore
         except FileNotFoundError:
@@ -78,6 +79,7 @@ def new_game():
     scores.reset_score()
     for row in dropped_segments:
         row.empty()  # erases all the segments on the play surfaces
+    get_bag()
     gen_next()  # starts the next, current, next ... cycle
     game_over = False
 
@@ -101,6 +103,12 @@ def gen_tetro(letter, surface):
                 current_tetro.add(new_segment)
 
 
+def get_bag():  # gets bag to for tetris pieces
+    global tetro_bag
+    tetro_bag = list(range(7))
+    shuffle(tetro_bag)
+
+
 """
 Each tetro is generated along with the next tetro. The gen_next function assigns the shape of the tetro as well
 as the color (referred to as surface). Rather than being displayed on the play surface, the next tetro is displayed on a
@@ -115,9 +123,9 @@ def gen_next():
     Next_letter is picked from the list of letters and the program retrieves the correct segment surface by getting the
     letter's index and matching it to a parallel tuple.
     """
-    # TODO: use random.shuffle to make a tetris bag
-    next_letter = random.choice(TETRO_LETTERS)
+    next_letter = TETRO_LETTERS[tetro_bag.pop()]
     next_surface = TETRO_SURFACES[TETRO_LETTERS.index(next_letter)]
+
     """
     The following code ensures the next tetromino is displayed in the center of the next piece surface. O requires
     custom logic because O if offset within its matrix, so that it displayed at the correct starting point on the play
@@ -146,6 +154,8 @@ def new_tetro():  # creates new tetro when current tetro has dropped
     gen_tetro(current_letter, current_surface)  # generate new current tetro
     gen_next()
     rotation_state = 0  # new tetro is dropping at its spawn state
+    if not tetro_bag:
+        get_bag()
     dropped = 0
 
 
@@ -484,8 +494,7 @@ def display_scoreboard():
     :return:
     """
     scoreboard_surface.fill(color_dict["black"])
-    scores_list = (scores.highscore, scores.score_list[0], scores.score_list[1], scores.score_list[2])
-    banners_list = (scores.highscore_banner, scores.banner_list[0], scores.banner_list[1], scores.banner_list[2])
+    scores_list, banners_list = [scores.highscore] + scores.score_list, [scores.highscore_banner] + scores.banner_list
     for index, banner in enumerate(banners_list):
         banner_surface = banner_font.render(banner, True, (255, 255, 255))
         score_surface = score_font.render(str(scores_list[index]), True, (175, 100, 255))
@@ -641,7 +650,7 @@ keys = ["KEYS", "_______", "ESC: pause menu", "R ARROW: move right", "L ARROW: m
 # scoreboard rect sets the dimensions and locations of the scoreboard.
 scoreboard_surface = pygame.Surface((SEGMENT_SIZE * 6, SEGMENT_SIZE * 16 + 10))  # with 10 pixel offset from top
 scoreboard_pos = (center(play_surface_location[0], SEGMENT_SIZE * 6), play_surface_location[1])
-scores = Score(("LEVEL:", "LINES:", "SCORE:"), [1, 0, -10], "gamedata")  # scoreboard initializes a Scoreboard object.
+scores = Score(["LEVEL:", "LINES:", "SCORE:"], [1, 0, -10], "gamedata")  # scoreboard initializes a Scoreboard object.
 scores.get_highscore()  # retrieves previous highscore
 
 """
@@ -1043,6 +1052,7 @@ game over, menu), and the game state is controlled by a return variable within e
     Once an event assigns a new game state to the game state variable, the function returns the game state and starts
 a new function.
 """
+
 game_state = "main menu"
 # TODO: create loading state
 # TODO: create ready state
