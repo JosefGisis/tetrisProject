@@ -5,7 +5,6 @@ This is the code for my first official Python project. It is a bare-bones tetris
 
 ![Alt Text](tetris-menu-_1_.gif)
 
-
 Surface images for tetris pieces and destroyed lines created by Josef Gisis
 
 Background image designed by rawpixel.com / Freepik
