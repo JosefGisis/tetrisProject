@@ -2,7 +2,7 @@ This is the code for my first official Python project. It is a bare-bones tetris
 - Josef Gisis 9/8/2023
 
 [![Watch the video](https://img.youtube.com/vi/pJ7ecHluLM8/maxresdefault.jpg)](https://youtu.be/pJ7ecHluLM8)
-![Alt Text](tetris%20menu%20(1).gif)
+![Alt Text](tetris-menu-_1_.gif)
 
 
 Surface images for tetris pieces and destroyed lines created by Josef Gisis
