@@ -516,7 +516,7 @@ ________________________________________________________________________________
 # TODO: shrink and correct menu buttons
 title_surf = title_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
 title_pos = (center(screen_width, title_surf.get_width()), 110)
-copyrite_surf = copyrite_font.render("©️ 2023 Josef Gisis - v 1.2", True, color_dict["white"])
+copyrite_surf = copyrite_font.render("2023 Josef Gisis - v 1.3", True, color_dict["white"])
 copyrite_pos = (center(screen_width, copyrite_surf.get_width()), 680)
 menu_imgs = (pygame.image.load("images/menu_button1.png"), pygame.image.load("images/menu_button2.png"),
              pygame.image.load("images/menu_button3.png"), pygame.image.load("images/menu_button4.png"),
