@@ -2,6 +2,7 @@ This is the code for my first official Python project. It is a bare-bones tetris
 - Josef Gisis 9/8/2023
 
 ![Alt Text](tetris-menu-_1_.gif)
+
 click here for full video: https://youtu.be/pJ7ecHluLM8
 
 or here for extended gameplay: https://youtu.be/H3VQvaIEuHo
