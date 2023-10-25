@@ -314,7 +314,6 @@ piece cannot be cleared, the rotation fails. Please see README file for a full e
 Do not alter any check lists. Lists are calibrated to ensure tetrominos do not exceed play surface boundaries or 
 collide with dropped tetrominos.
 """
-
 cw_check = [[[0, 1], [-1, 0], [1, -3], [-1, 0], [1, 2]], [[1, 0], [0, -1], [-1, 3], [1, 0], [-1, -2]],
             [[1, 0], [0, 1], [-1, -3], [1, 0], [-1, 2]], [[-1, 0], [0, -1], [1, 3], [-1, 0], [1, -2]]]
 
@@ -326,8 +325,6 @@ ccw_check = [[[0, 1], [1, 0], [-1, -3], [1, 0], [-1, 2]], [[1, 0], [0, -1], [-1,
 
 ccw_ipiece_check = [[[0, 2], [-1, -2], [0, 2], [3, -3], [-2, 1]], [[2, 0], [-3, 0], [3, 1], [-3, -3], [1, 2]],
                     [[1, 0], [-3, 0], [3, -2], [-3, 3], [2, -1]], [[-2, 0], [3, 0], [-3, -1], [3, 3], [-1, -2]]]
-
-# TODO: resume editing from this point
 # TODO: improve and simplify rotation functions
 
 
@@ -512,15 +509,16 @@ keys_font = pygame.font.SysFont(main_font, 18)  # Font for keys instructions
 """This segment contains variables/constants/objects for the main menu.
 ________________________________________________________________________________________________________________________
 """
-# TODO: create title image
-# TODO: shrink and correct menu buttons
 title_surf = title_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
 title_pos = (center(screen_width, title_surf.get_width()), 110)
 copyrite_surf = copyrite_font.render("2023 Josef Gisis - v 1.3", True, color_dict["white"])
 copyrite_pos = (center(screen_width, copyrite_surf.get_width()), 680)
-menu_imgs = (pygame.image.load("images/menu_button1.png"), pygame.image.load("images/menu_button2.png"),
-             pygame.image.load("images/menu_button3.png"), pygame.image.load("images/menu_button4.png"),
-             pygame.image.load("images/menu_button5.png"), pygame.image.load("images/menu_button6.png"))
+menu_imgs = (pygame.transform.scale(pygame.image.load("images/menu_button1.png"), (450, 100)),
+             pygame.transform.scale(pygame.image.load("images/menu_button2.png"), (450, 100)),
+             pygame.transform.scale(pygame.image.load("images/menu_button3.png"), (450, 100)),
+             pygame.transform.scale(pygame.image.load("images/menu_button4.png"), (450, 100)),
+             pygame.transform.scale(pygame.image.load("images/menu_button5.png"), (450, 100)),
+             pygame.transform.scale(pygame.image.load("images/menu_button6.png"), (450, 100)))
 button_left = center(screen_width, menu_imgs[0].get_width())
 menu_button1 = Button(screen, (button_left, 290), menu_imgs[0], menu_imgs[1])
 menu_button2 = Button(screen, (button_left, 420), menu_imgs[2], menu_imgs[3])
@@ -722,6 +720,7 @@ def main_menu():  # Function for the main menu
 
         pygame.display.flip()
     return "exit"
+
 
 def game_loop():  # Main game loop function
     global prev_shift_time, prev_drop_time, game_over, screen_capture, animation_count, \
