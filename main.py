@@ -524,6 +524,20 @@ menu_button1 = Button(screen, (button_left, 290), menu_imgs[0], menu_imgs[1])
 menu_button2 = Button(screen, (button_left, 420), menu_imgs[2], menu_imgs[3])
 menu_button3 = Button(screen, (button_left, 550), menu_imgs[4], menu_imgs[5])
 
+"""This segment contains variables/constants/objects for the "get ready" segment.
+________________________________________________________________________________________________________________________
+"""
+get_ready_counter = 0
+ready = 100
+ready_imgs = (pygame.image.load("images/ready_img1.png"), pygame.image.load("images/ready_img2.png"),
+              pygame.image.load("images/ready_img3.png"), pygame.image.load("images/ready_img4.png"),
+              pygame.image.load("images/ready_img5.png"), pygame.image.load("images/ready_img6.png"))
+ready_img_pos = center(screen_width, ready_imgs[0].get_width()),\
+              center(screen_height, ready_imgs[0].get_height()) - 50
+ready_text_surf = score_font.render("GET READY!", True, color_dict["white"])
+ready_text_pos = center(screen_width, ready_text_surf.get_width()),\
+                 center(screen_height, ready_text_surf.get_height()) + 50
+
 """This segment contains variables/constants/constants used in the game loop.
 ________________________________________________________________________________________________________________________
 """
@@ -696,7 +710,7 @@ def main_menu():  # Function for the main menu
                 if pygame.key.get_mods() & pygame.KMOD_SHIFT:
                     if event.key == pygame.K_g:
                         new_game()
-                        return "start"
+                        return "get ready"
                     elif event.key == pygame.K_h:
                         new_game()
                         return "help and info"
@@ -711,7 +725,7 @@ def main_menu():  # Function for the main menu
 
         if menu_button1.update_button() and clicked:  # Displays start button and checks if user has clicked
             new_game()
-            return "start"
+            return "get ready"
         elif menu_button2.update_button() and clicked:
             new_game()
             return "help and info"
@@ -719,6 +733,45 @@ def main_menu():  # Function for the main menu
             running = False
 
         pygame.display.flip()
+    return "exit"
+
+
+def get_ready():  # Get ready state function
+    global screen_capture, get_ready_counter
+    rotation_animation = 0
+    running = True
+    while running:
+        clock.tick(60)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return "pause menu"
+
+        if get_ready_counter < ready:
+            if rotation_animation % 60 == 0:
+                if rotation_animation // 60 > 5:
+                    rotation_animation = 0
+                    rotation_stat = 0
+                else:
+                    rotation_stat = rotation_animation // 60
+                screen.blit(bg_img, (0, 0))
+                display_next()
+                display_keys()
+                display_scoreboard()
+                pygame.draw.rect(screen, color_dict["black"], [center(screen_width, play_surface_size[0]) - 6,
+                                                               center(screen_height, play_surface_size[1]) - 6,
+                                                               play_surface_size[0] + 11, play_surface_size[1] + 11])
+                screen.blit(ready_text_surf, ready_text_pos)
+                screen.blit(ready_imgs[rotation_stat], ready_img_pos)
+            rotation_animation += 5
+            get_ready_counter += 1
+            pygame.display.flip()
+        else:
+            get_ready_counter = 0
+            new_game()
+            return "start"
     return "exit"
 
 
@@ -997,14 +1050,14 @@ def help_and_info():  # Help and info state function
 """This is the central loop that controls the state of the game. Each game state has a function (e.g. start game, 
 game over, menu), and the game state is controlled by a return variable within each function.
 """
-
 game_state = "main menu"
-# TODO: create ready state
 while True:
     if game_state == "main menu":
         game_state = main_menu()
     elif game_state == "help and info":
         game_state = help_and_info()
+    elif game_state == "get ready":
+        game_state = get_ready()
     elif game_state == "start":
         game_state = game_loop()
     elif game_state == "pause menu":
