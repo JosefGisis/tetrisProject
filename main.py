@@ -505,13 +505,14 @@ title_font = pygame.font.SysFont(main_font, 80)
 score_font = pygame.font.SysFont(main_font, 40)
 banner_font = pygame.font.SysFont(main_font, 35)
 keys_font = pygame.font.SysFont(main_font, 18)  # Font for keys instructions
+countdown_font = pygame.font.SysFont(main_font, 200)  # Font for countdown countdown
 
 """This segment contains variables/constants/objects for the main menu.
 ________________________________________________________________________________________________________________________
 """
 title_surf = title_font.render("TITLE PLACEHOLDER", True, color_dict["white"])
 title_pos = (center(screen_width, title_surf.get_width()), 110)
-copyrite_surf = copyrite_font.render("2023 Josef Gisis - v 1.3", True, color_dict["white"])
+copyrite_surf = copyrite_font.render("2023 Josef Gisis - v 1.4", True, color_dict["white"])
 copyrite_pos = (center(screen_width, copyrite_surf.get_width()), 680)
 menu_imgs = (pygame.transform.scale(pygame.image.load("images/menu_button1.png"), (450, 100)),
              pygame.transform.scale(pygame.image.load("images/menu_button2.png"), (450, 100)),
@@ -523,20 +524,6 @@ button_left = center(screen_width, menu_imgs[0].get_width())
 menu_button1 = Button(screen, (button_left, 290), menu_imgs[0], menu_imgs[1])
 menu_button2 = Button(screen, (button_left, 420), menu_imgs[2], menu_imgs[3])
 menu_button3 = Button(screen, (button_left, 550), menu_imgs[4], menu_imgs[5])
-
-"""This segment contains variables/constants/objects for the "get ready" segment.
-________________________________________________________________________________________________________________________
-"""
-get_ready_counter = 0
-ready = 100
-ready_imgs = (pygame.image.load("images/ready_img1.png"), pygame.image.load("images/ready_img2.png"),
-              pygame.image.load("images/ready_img3.png"), pygame.image.load("images/ready_img4.png"),
-              pygame.image.load("images/ready_img5.png"), pygame.image.load("images/ready_img6.png"))
-ready_img_pos = center(screen_width, ready_imgs[0].get_width()),\
-              center(screen_height, ready_imgs[0].get_height()) - 50
-ready_text_surf = score_font.render("GET READY!", True, color_dict["white"])
-ready_text_pos = center(screen_width, ready_text_surf.get_width()),\
-                 center(screen_height, ready_text_surf.get_height()) + 50
 
 """This segment contains variables/constants/constants used in the game loop.
 ________________________________________________________________________________________________________________________
@@ -710,7 +697,7 @@ def main_menu():  # Function for the main menu
                 if pygame.key.get_mods() & pygame.KMOD_SHIFT:
                     if event.key == pygame.K_g:
                         new_game()
-                        return "get ready"
+                        return "countdown"
                     elif event.key == pygame.K_h:
                         new_game()
                         return "help and info"
@@ -725,7 +712,7 @@ def main_menu():  # Function for the main menu
 
         if menu_button1.update_button() and clicked:  # Displays start button and checks if user has clicked
             new_game()
-            return "get ready"
+            return "countdown"
         elif menu_button2.update_button() and clicked:
             new_game()
             return "help and info"
@@ -736,9 +723,11 @@ def main_menu():  # Function for the main menu
     return "exit"
 
 
-def get_ready():  # Get ready state function
-    global screen_capture, get_ready_counter
-    rotation_animation = 0
+def countdown():  # Countdown state function
+    global screen_capture
+    # Ready and opacity counters control countdown numbers and transparency
+    ready_counter = 3
+    opacity_counter = 255
     running = True
     while running:
         clock.tick(60)
@@ -747,30 +736,33 @@ def get_ready():  # Get ready state function
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    screen_capture = pygame.Surface.copy(screen)  # Users can pause countdown
                     return "pause menu"
+                elif event.key == pygame.K_SPACE:
+                    ready_counter = 0
 
-        if get_ready_counter < ready:
-            if rotation_animation % 60 == 0:
-                if rotation_animation // 60 > 5:
-                    rotation_animation = 0
-                    rotation_stat = 0
-                else:
-                    rotation_stat = rotation_animation // 60
-                screen.blit(bg_img, (0, 0))
-                display_next()
-                display_keys()
-                display_scoreboard()
-                pygame.draw.rect(screen, color_dict["black"], [center(screen_width, play_surface_size[0]) - 6,
-                                                               center(screen_height, play_surface_size[1]) - 6,
-                                                               play_surface_size[0] + 11, play_surface_size[1] + 11])
-                screen.blit(ready_text_surf, ready_text_pos)
-                screen.blit(ready_imgs[rotation_stat], ready_img_pos)
-            rotation_animation += 10
-            get_ready_counter += 1
-            pygame.display.flip()
+        screen.blit(bg_img, (0, 0))
+        display_next()
+        display_keys()
+        display_scoreboard()
+        # Cannot display play surface because users can use it to indefinitely plan tetromino drop
+        pygame.draw.rect(screen, (0, 0, 0), [center(screen_width, play_surface_size[0]) - 6,
+                                             center(screen_height, play_surface_size[1]) - 6, play_surface_size[0] + 11,
+                                             play_surface_size[1] + 11])
+        if ready_counter > 0:
+            if opacity_counter >= 50:  # Numbers do not go full transparent
+                countdown_surf = countdown_font.render(str(ready_counter), True, (255, 255, 255))
+                countdown_surf.set_alpha(opacity_counter)
+                # Adjust position based on number width
+                countdown_pos = center(screen_width, countdown_surf.get_width()),\
+                                center(screen_height, countdown_surf.get_height())
+                screen.blit(countdown_surf, countdown_pos)
+                opacity_counter -= 5
+                pygame.display.flip()
+            else:
+                opacity_counter = 300
+                ready_counter -= 1
         else:
-            get_ready_counter = 0
-            new_game()
             return "start"
     return "exit"
 
@@ -899,11 +891,11 @@ def pause_menu():  # Pause menu loop
                     running = False
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        return "start"
+                        return "countdown"
                     elif pygame.key.get_mods() & pygame.KMOD_SHIFT:
                         if event.key == pygame.K_r:
                             new_game()
-                            return "start"
+                            return "countdown"
                         elif event.key == pygame.K_h:
                             return "help and info"
                         elif event.key == pygame.K_m:
@@ -916,7 +908,7 @@ def pause_menu():  # Pause menu loop
             screen.blit(pause_surface, (pause_surface_location[0], pause_surface_location[1]))
             screen.blit(paused_text_surf, paused_text_pos)
             if pause_button1.update_button() and clicked:
-                return "start"
+                return "countdown"
             elif pause_button2.update_button() and clicked:
                 return "help and info"
             elif pause_button3.update_button() and clicked:
@@ -933,14 +925,14 @@ def pause_menu():  # Pause menu loop
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_KP_ENTER:
                         new_game()
-                        return "start"
+                        return "countdown"
                     elif event.key == pygame.K_ESCAPE:
                         selection = None
 
             restart_warning_box.display_box()
             if ok_button.update_button():
                 new_game()
-                return "start"
+                return "countdown"
             elif cancel_button.update_button():
                 selection = None
 
@@ -980,7 +972,7 @@ def gameover():  # Game over loop
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     new_game()
-                    return "start"
+                    return "countdown"
                 elif pygame.key.get_mods() & pygame.KMOD_SHIFT:
                     if event.key == pygame.K_m:
                         return "main menu"
@@ -994,7 +986,7 @@ def gameover():  # Game over loop
         score_box.update_box()
         if gameover_button1.update_button() and clicked:
             new_game()
-            return "start"
+            return "countdown"
         if gameover_button2.update_button() and clicked:
             return "main menu"
         if gameover_button3.update_button() and clicked:
@@ -1029,7 +1021,7 @@ def help_and_info():  # Help and info state function
                     info_box.scroll(-12)
                 elif pygame.key.get_mods() & pygame.KMOD_SHIFT:
                     if event.key == pygame.K_g:
-                        return "start"
+                        return "countdown"
                     elif event.key == pygame.K_m:
                         return "main menu"
 
@@ -1042,7 +1034,7 @@ def help_and_info():  # Help and info state function
             info_box.scroll_top = 20
             return "main menu"
         elif strt_button.update_button() and clicked:
-            return "start"
+            return "countdown"
         pygame.display.flip()
     return "exit"
 
@@ -1056,8 +1048,8 @@ while True:
         game_state = main_menu()
     elif game_state == "help and info":
         game_state = help_and_info()
-    elif game_state == "get ready":
-        game_state = get_ready()
+    elif game_state == "countdown":
+        game_state = countdown()
     elif game_state == "start":
         game_state = game_loop()
     elif game_state == "pause menu":
