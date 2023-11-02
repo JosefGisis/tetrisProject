@@ -765,7 +765,7 @@ def get_ready():  # Get ready state function
                                                                play_surface_size[0] + 11, play_surface_size[1] + 11])
                 screen.blit(ready_text_surf, ready_text_pos)
                 screen.blit(ready_imgs[rotation_stat], ready_img_pos)
-            rotation_animation += 5
+            rotation_animation += 10
             get_ready_counter += 1
             pygame.display.flip()
         else:
