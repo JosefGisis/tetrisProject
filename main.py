@@ -100,6 +100,8 @@ The shape of the letter is replicated by iterating through the letter matrix and
 True (that is there is a one in that slot).
 """
 
+# TODO: gen_next should be a class method
+
 
 def gen_next():
     global next_letter, next_surface
@@ -119,6 +121,9 @@ def gen_next():
             if cell:
                 segment_location = (SEGMENT_SIZE*cell_index) + left, (SEGMENT_SIZE*row_index) + 3*SEGMENT_SIZE
                 next_tetro.add(Segment(segment_location, next_surface))
+
+
+# TODO: current_tetro should be contained in class
 
 
 def gen_tetro(letter, surface):
@@ -190,7 +195,7 @@ def line_animation():  # Animates destroyed lines
     if not game_over:
         filled_lines = get_lines()
         if filled_lines:
-            white_square.set_alpha(25)  # Layers semi-transparent squares to white out filled lines
+            white_square.set_alpha(25)  # Layers semi-transparent squares to white-out filled lines
             white_square.fill(color_dict["white"])
             for line in filled_lines:  # Displays white square over each segment in filled lines
                 for segment in range(10):
@@ -236,7 +241,7 @@ def shift_rows_down(speed):  # If rows not aligned, sprites need to be shifted t
     for row_index, row in enumerate(dropped_segments):
         for segment in row.sprites():
             if segment.rect.top // SEGMENT_SIZE != row_index:
-                segment.rect.top += speed  # Moves sprites down at given speed (depends on framerate)
+                segment.rect.top += speed  # Moves sprites down at given speed (depends on frame rate)
     update_play_surface()  # Redraws play surface to update their position
     pygame.display.flip()
 
@@ -485,7 +490,6 @@ def display_keys():
 ________________________________________________________________________________________________________________________
 """
 pygame.init()
-# TODO: find a way to make screen resizeable
 display_size = screen_width, screen_height = (1000, 800)
 flags = pygame.RESIZABLE | pygame.SCALED
 screen = pygame.display.set_mode((screen_width, screen_height), flags)
@@ -590,7 +594,7 @@ play_surface = pygame.Surface(play_surface_size)
 play_surface_location = center(screen_width, play_surface_size[0]), center(screen_height, play_surface_size[1])
 play_surface_right, play_surface_bottom = play_surface_location[0] + play_surface_size[0], \
                                           play_surface_location[1] + play_surface_size[1]
-right_margin = screen_width - play_surface_right  #Right margin from right side of play surface
+right_margin = screen_width - play_surface_right  # Right margin from right side of play surface
 
 # Surface for displaying upcoming tetromino
 next_surface_size = SEGMENT_SIZE*5, SEGMENT_SIZE*6
@@ -754,8 +758,8 @@ def countdown():  # Countdown state function
                 countdown_surf = countdown_font.render(str(ready_counter), True, (255, 255, 255))
                 countdown_surf.set_alpha(opacity_counter)
                 # Adjust position based on number width
-                countdown_pos = center(screen_width, countdown_surf.get_width()),\
-                                center(screen_height, countdown_surf.get_height())
+                countdown_pos = (center(screen_width, countdown_surf.get_width()),
+                                 center(screen_height, countdown_surf.get_height()))
                 screen.blit(countdown_surf, countdown_pos)
                 opacity_counter -= 5
                 pygame.display.flip()
@@ -785,7 +789,7 @@ def game_loop():  # Main game loop function
                         game_over = True
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
-                            # Gets a copy of the screen for use in in the pause menu
+                            # Gets a copy of the screen for use in the pause menu
                             screen_capture = pygame.Surface.copy(screen)
                             return "pause menu"
                         elif event.key == pygame.K_RIGHT:
@@ -885,10 +889,12 @@ def pause_menu():  # Pause menu loop
     clicked = False
     running = True
     while running:
+        #  If user has made a selection a warning box is displayed
         if not selection:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                # Keyboard shortcuts for pause menu options
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         return "countdown"
@@ -915,6 +921,7 @@ def pause_menu():  # Pause menu loop
                 selection = "restart"
             elif pause_button4.update_button() and clicked:
                 selection = "back to menu"
+            # Ensures buttons are display even after making a selection
             pause_button3.update_button()
             pause_button4.update_button()
 
@@ -923,6 +930,7 @@ def pause_menu():  # Pause menu loop
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
+                    # Keyboard shortcuts for warning box
                     if event.key == pygame.K_KP_ENTER:
                         new_game()
                         return "countdown"

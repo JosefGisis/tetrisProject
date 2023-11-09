@@ -1,6 +1,9 @@
 This is the code for my first official Python project. It is a bare-bones tetris style game.
 - Josef Gisis 9/8/2023
 
+This game is currently at version 1.4. Future versions will contain improved graphics, and tetrominos will be 
+contained within classes, as well as many other features.
+
 ![Alt Text](tetris-menu-_1_.gif)
 
 click here for full video: https://youtu.be/pJ7ecHluLM8
